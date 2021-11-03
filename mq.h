@@ -1,52 +1,47 @@
-#include <pthread.h>
+#include "mutex.h"
+#include "condition.h"
 #include <queue>
-// #include <stdio.h>
 // 消息队列，用于生产者消费者模式
 template <typename T>
 class MQ {
 public:
-    MQ();
+    MQ()
+        : _mutex(),
+          _cond(_mutex),
+          q()
+    {}
     void push(T data); // V
     T pull();         // P
     void clear(); // clear all elements in queue
     // size_t size(); // mq size
 private:
-    pthread_mutex_t lock;
-    pthread_cond_t  cond;
+    MutexLock _mutex;
+    Condition _cond;
     std::queue<T> q;
 };
 
-template <typename T>
-MQ<T>::MQ() {
-    pthread_mutex_init(&lock, NULL);
-    pthread_cond_init(&cond, NULL);
-}
 
 template <typename T>
 void MQ<T>::push(T data) {
-    pthread_mutex_lock(&lock);
+    MutexGuard lock(_mutex);
     q.push(data);
-    pthread_cond_broadcast(&cond);// wakeup all.
-    pthread_mutex_unlock(&lock);
+    _cond.wakeupAll();
 }
 
 template <typename T>
 T MQ<T>::pull() {
-    pthread_mutex_lock(&lock);
+    MutexGuard lock(_mutex);
     while (q.empty()) { // 避免虚假的 wakeup
-        pthread_cond_wait(&cond, &lock); // relase lock and hold it again when return back
+        _cond.wait(); // relase lock and hold it again when return back
     }
     T result = q.front(); // copy constructor?
-    // printf("%d ", (int)result);
     q.pop(); // T's destructor?
-    pthread_mutex_unlock(&lock);
     return result;
 }
 
 template <typename T>
 void MQ<T>::clear() {
-    pthread_mutex_lock(&lock);
+    MutexGuard lock(_mutex);
     while (!q.empty())
         q.pop();
-    pthread_mutex_unlock(&lock);
 }

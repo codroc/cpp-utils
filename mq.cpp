@@ -12,7 +12,7 @@ using namespace std;
 
 typedef function<void (string&)> fnvstr;
 void myReverse(string& str) {
-    for (int i = 0;i < 100000;++i)
+    for (int i = 0;i < 100001;++i)
         reverse(str.begin(), str.end());
 }
 
@@ -43,6 +43,7 @@ void* producer(void*) {
         intMQ.push(p);
     }
     printf("\nproducer thread exited!\n");
+    return 0;
 }
 
 void* consumer(void*) {
