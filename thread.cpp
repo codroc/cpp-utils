@@ -3,6 +3,12 @@
 #include <sys/syscall.h>
 #include <cassert>
 #include <cstring>
+
+// declare
+namespace CurrentThread {
+    pid_t gettid();
+}
+
 Thread::Thread()
     : _started(false),
       _joined(false),
@@ -55,7 +61,7 @@ ThreadData::ThreadData(threadFunc start_routine, pid_t *tid, const std::string &
           _name(std::move(name))
 {}
 
-pid_t gettid() { return static_cast<pid_t>(::syscall(SYS_gettid)); }
+pid_t gettid() { return CurrentThread::gettid(); }
 
 void ThreadData::beforeRoutine() {
     *_tid = gettid();

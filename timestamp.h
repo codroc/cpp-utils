@@ -1,6 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 #include <sys/time.h>
+#include <cstddef>
 typedef long long int64;
 class Timestamp {
 public:

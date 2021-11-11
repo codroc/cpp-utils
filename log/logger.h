@@ -3,6 +3,7 @@
 
 #include "mutex.h"
 #include <memory>
+#include <vector>
 
 class LogStream;
 // 日志器就是日志系统的调用接口
@@ -40,6 +41,12 @@ public:
     LogStream& stream(const char *filename, int line, LEVEL level);
     LogStream& stream(const char *filename, int line, LEVEL level, const char *func);
 
+    static void release() {
+        while(!_streams.empty())
+            _streams.pop_back();
+        if (instance)
+            delete instance;
+    }
 private:
     // 不允许外部构造
     Logger() = default;
@@ -56,6 +63,7 @@ private:
 
     // 唯一持有 appender
     // std::unique_ptr<Appender> _upAppender;
+    static std::vector<std::unique_ptr<LogStream>> _streams;
 };
 
 #define LOG_TRACE if (Logger::getLevel() <= Logger::LEVEL::TRACE) \
@@ -70,5 +78,12 @@ private:
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::ERROR)
 // fatal 必定退出进程
 #define LOG_FATAL Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::FATAL)
+
+class LoggerWatcher {
+public:
+    ~LoggerWatcher() {
+        Logger::release();
+    }
+};
 
 #endif 

@@ -124,12 +124,15 @@ void test_non_lock_io_bound_task() {
     printf("%d threads write files cost: %lld us\n", kNumThreads, ti);
 }
 
+namespace CurrentThread {
+    pid_t gettid();
+}
 void test_single_thread() {
     Timestamp start = Timestamp::now();
     cpu_bound_task(0, kNumBuckets);
     Timestamp end = Timestamp::now();
     int64 t = end - start;
-    printf("Single thread cost: %lld us\n", t);
+    printf("Single thread %d cost: %lld us\n", CurrentThread::gettid(), t);
 }
 
 void init() {

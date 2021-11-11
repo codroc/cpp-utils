@@ -15,7 +15,7 @@ public:
     using self = LogStream;
 
     LogStream();
-    // ~LogStream(); default destructor is ok
+    ~LogStream();
 
     // 日期 时间 线程id 日志级别 源文件名:行号 - 正文 
     // 正文前面的可以在 makeLog 中完成
@@ -36,14 +36,18 @@ public:
             // 把 _buf ~ _end 的内容拷贝给后端，再把 _end ~ _cur 的内容移到 _buf 最前面并重新执行以下指令就行了
             // for test:
             // 测试时，用户不断写日志，必定导致 buffer 不够，此时将 _buf ~ _end 的内容输出到控制台查看是否有误
-            std::string s(_buf, static_cast<size_t>(_end - _buf));
-            printf("%s", s.c_str());
+            // 前端的 flush 是将 buffer 中数据刷新到后端去。
+            flush();
 
             memmove(_buf, _end, (size_t)(_cur - _end));
             _cur = _buf + static_cast<size_t>(_cur - _end);
             _end = _buf;
             append(p, len);
         }
+    }
+    void flush() {
+        std::string s(_buf, static_cast<size_t>(_end - _buf));
+        printf("%s", s.c_str());
     }
     // format integer
     template <typename T>
@@ -88,7 +92,7 @@ public:
     const char* end() { return sizeof(_buf) + _buf; }
 private:
     // buffer 我们假设一条日志的长度不超过 100 字节，Buffer 可缓存 1000 条日志
-    static const int kBufferSize = 1000 * 100; // 100KB
+    static const int kBufferSize = 1000 * 66; // 100KB
     char      _buf[kBufferSize];
     char*     _cur; // 用于 append 到 buffer 时进行位置定位
     char*     _end; // 用于记录完整的日志尾部，_buf ~ _end 的每一条日志都是完整的
