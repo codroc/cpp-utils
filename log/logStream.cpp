@@ -7,7 +7,9 @@
 
 __thread char t_formatTime[64];
 __thread int64 t_lastSecs;
+__thread int  t_needFlush = 0;
 extern __thread struct tm *t_tm;
+
 
 const char digits[] = "0123456789";
 const char *levels[] = {
@@ -20,6 +22,20 @@ const char *levels[] = {
     "FATAL",
 };
 
+void defaultOutputFunc(const char *msg, int len) {
+    size_t n = fwrite(msg, 1, len, stdout);
+}
+void defaultFlushFunc() {
+    fflush(stdout);
+}
+
+// 由于 g_output 是全局变量，因此会在编译后便被初始化
+LogStream::outputFunc g_output = defaultOutputFunc;
+LogStream::flushFunc  g_flush  = defaultFlushFunc;
+
+void LogStream::setOutputFunc(LogStream::outputFunc f) { g_output = f; }
+void LogStream::setFlushFunc(LogStream::flushFunc f) { g_flush = f; }
+
 LogStream::LogStream() 
     : _cur(_buf),
       _end(_buf)
@@ -27,13 +43,24 @@ LogStream::LogStream()
 
 // 析构前必须刷新缓冲区
 LogStream::~LogStream() {
-    printf("go die!\n");
+    // printf("go die!\n");
+    _end = _cur;
     flush();
+}
+
+void LogStream::flush() {
+    g_output(_buf, static_cast<size_t>(_end - _buf));
+    g_flush();
 }
 
 void LogStream::makeLog(const char *filename, int line, Logger::LEVEL level) {
         // _end 用于标记 最后一条完整日志的结尾
         _end = _cur;
+        if (t_needFlush == 1) {
+            flush();
+            _cur = _end = _buf;
+            t_needFlush = 0;
+        }
         *this << formatTime()
               << ' ' << CurrentThread::gettid()
               << ' ' << levels[(int)level]
@@ -71,6 +98,9 @@ char *LogStream::formatTime() {
     int64 secs = microSecs / Timestamp::kMicroSecondsPerSecond;
     int64 us = microSecs % Timestamp::kMicroSecondsPerSecond;
     if (secs != t_lastSecs) {
+        // need to flush log to back-end
+        if (t_lastSecs != 0)
+            t_needFlush = 1;
         t_lastSecs = secs;
         FastSecondToDate(static_cast<time_t>(secs), t_tm, 8);
         // localtime 开销太大了！

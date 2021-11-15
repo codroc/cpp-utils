@@ -41,11 +41,17 @@ public:
     LogStream& stream(const char *filename, int line, LEVEL level);
     LogStream& stream(const char *filename, int line, LEVEL level, const char *func);
 
+    // for flush buffer, and release resource
     static void release() {
-        while(!_streams.empty())
-            _streams.pop_back();
-        if (instance)
+        if (instance) {
+            _streams.clear();
+            while(!_tms.empty()) {
+                struct tm* tm = _tms.back();
+                _tms.pop_back();
+                free(tm);
+            }
             delete instance;
+        }
     }
 private:
     // 不允许外部构造
@@ -58,12 +64,14 @@ private:
     // 线程安全
     static MutexLock lock;
 
+    // 用于 _streams.push_back and _tms.push_back 时的线程安全
+    MutexLock initlock;
+
     // stream
     // 这里设计成每个线程 一个 stream 不就能避免 lock contention 了嘛！
 
-    // 唯一持有 appender
-    // std::unique_ptr<Appender> _upAppender;
     static std::vector<std::unique_ptr<LogStream>> _streams;
+    static std::vector<struct tm*> _tms;
 };
 
 #define LOG_TRACE if (Logger::getLevel() <= Logger::LEVEL::TRACE) \

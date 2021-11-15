@@ -1,5 +1,6 @@
 #include "logger.h"
 #include "logStream.h"
+#include <stdio.h>
 __thread LogStream* t_pLogStream = 0;
 __thread struct tm *t_tm = 0;
 
@@ -7,8 +8,9 @@ Logger::LEVEL Logger::level = Logger::LEVEL::NONE;
 MutexLock Logger::lock;
 Logger* Logger::instance = 0;
 std::vector<std::unique_ptr<LogStream>> Logger::_streams;
+std::vector<struct tm*> Logger::_tms;
 
-LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
+// LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
 Logger* Logger::getInstance() {
     if (instance == 0) {
@@ -33,10 +35,13 @@ void Logger::init() {
 
 LogStream& Logger::stream(const char *filename, int line, LEVEL level) {
     if (t_pLogStream == 0) {
+        MutexGuard guard(initlock);
         std::unique_ptr<LogStream> up(new LogStream()); // RAII
         t_pLogStream = up.get();
         _streams.push_back(std::move(up));
+
         t_tm = (struct tm*)malloc(sizeof(struct tm));
+        _tms.push_back(t_tm);
     }
     t_pLogStream->makeLog(filename, line, level);
     return *t_pLogStream;
