@@ -34,7 +34,7 @@ public:
 
     // format integer
     template <typename T>
-    std::string formatInteger(T v);
+    static std::string formatInteger(T v);
     // format time
     char *formatTime();
 

@@ -89,7 +89,7 @@ std::string LogStream::formatInteger(T v) {
     return s;
 }
 
-static 
+
 int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
 
 char *LogStream::formatTime() {

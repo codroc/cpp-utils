@@ -16,9 +16,9 @@ public:
 
 class AppenderFile : public Appender {
 public:
-    AppenderFile(const char* filename)
-        : _filename(filename),
-          _openFile(fopen(filename, "a"))
+    AppenderFile(const char* basename)
+        : _basename(basename),
+          _openFile(fopen(_basename, "a"))
     {}
     
     ~AppenderFile() {
@@ -29,10 +29,10 @@ public:
     // 将 日志 追加到 文件中去
     void append(const char *logline, int len) override {
         fwrite(logline, len, 1, _openFile);
-        fflush(_openFile);
+        // fflush(_openFile);
     }
 private:
-    const char* _filename;
+    const char* _basename;
     FILE*       _openFile;
 };
 

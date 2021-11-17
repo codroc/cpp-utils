@@ -2,7 +2,13 @@
 #include "logger.h"
 #include "logStream.h"
 #include "appender.h"
+#include "timestamp.h"
 #include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 // 全局的 日志后端
 AsyncLogging *g_asyncLog;
@@ -18,7 +24,7 @@ void AsyncLogOutput(const char *msg, int len) {
 //  LOG_WARN << "WARN!\n";
 // }
 AsyncLoggingWatcher::AsyncLoggingWatcher()
-    : _upAsyncLogging(new AsyncLogging("mylog", 1000*1000*1000, 3))
+    : _upAsyncLogging(new AsyncLogging("mylog", 1000*1000*100, 3))
 {
     g_asyncLog = _upAsyncLogging.get();
     LogStream::setOutputFunc(AsyncLogOutput);
@@ -70,9 +76,46 @@ void AsyncLogging::append(const char *logline, int len) {
     }
 }
 
+extern int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
+
+class LogStream;
+
+extern template std::string LogStream::formatInteger<int>(int v);
+
+
+// rollFile 是根据 rollSize 来进行文件更新的，
+// 文件命名方式：程序名.日期.主机名.进程id.log
 std::string AsyncLogging::rollFile() {
-    printf("start roll file!\n");    
-    return std::string("new_log");
+    // 首先进行文件名构造
+    struct tm t;
+    char tmp[40];
+    memset(tmp, 0, sizeof(tmp));
+    std::string ret(_basename);
+
+    int64_t secs = Timestamp::now().microSeconds() / Timestamp::kMicroSecondsPerSecond;
+    FastSecondToDate(static_cast<time_t>(secs), &t, 8);
+    strftime(tmp, sizeof(tmp), "%Y-%m-%d", &t);
+    ret.push_back('.');
+    ret.append(tmp);
+
+    ret.push_back('.');
+    ret.append(LogStream::formatInteger(static_cast<int>(getpid())).c_str());
+
+    ret.append(".log0");
+    // printf("start roll file! %s\n", ret.c_str());
+    
+    // 执行脚本，对原来的 日志包 解包，对每个日志文件重命名（0=>1，1=>2 ...），然后将 1~N 的日志文件重新压缩打包，父进程等待子进程退出，这阶段父进程不能持有任何锁
+    char *args[3];
+    char newfile[40];
+    memset(newfile, 0, sizeof(newfile));
+    memcpy(newfile, ret.c_str(), ret.size());
+    args[1] = newfile;
+    args[2] = 0;
+    pid_t pid;
+    if ((pid = fork()) == 0)
+        execv("jiaoben", args);
+    assert(pid == wait(0)); // 等待子进程结束
+    return ret;
 }
 
 
@@ -80,7 +123,7 @@ void AsyncLogging::mainRoutine() {
     BufferPointer buffer1(new Buffer);
     BufferPointer buffer2(new Buffer);
     BPV           buffers;
-    std::unique_ptr<Appender> appender(new AppenderFile(_basename));
+    std::unique_ptr<Appender> appender(new AppenderFile(rollFile().c_str()));
     int written = 0; // 用于记录已写日志数据量
     // 按照 5W/s 的并发连接数来算，每条连接 3 条日志，那么就是 15W 条/s 的日志量，这将接近充满 4 个 Buffer
     while(_running) {
@@ -110,7 +153,8 @@ void AsyncLogging::mainRoutine() {
         for (auto &pBuf : buffers)
             needWrite += pBuf->size();
         if (written + needWrite > _rollSize) {
-            std::string fname = rollFile();
+            appender.reset(); // 一个文件写满了，关闭文件，不然 脚本 在 执行 tar 时会出错
+            std::string fname = rollFile(); // 会被阻塞，等待 jiaoben 进程结束
             appender.reset(new AppenderFile(fname.c_str()));
             written = 0;
         }
