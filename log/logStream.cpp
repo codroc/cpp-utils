@@ -1,17 +1,15 @@
 #include "logStream.h"
 #include "timestamp.h"
+#include "currentThread.h"
 #include <sys/time.h>
 #include <time.h>
-#include <algorithm>
 #include <stdio.h>
 
-__thread char t_formatTime[64];
+__thread char t_formatTime[64]; // 用于缓存 1s 内的 “日期 时间” 格式
 __thread int64 t_lastSecs;
 __thread int  t_needFlush = 0;
 extern __thread struct tm *t_tm;
 
-
-const char digits[] = "0123456789";
 const char *levels[] = {
     "NONE",
     "TRACE",
@@ -23,7 +21,7 @@ const char *levels[] = {
 };
 
 void defaultOutputFunc(const char *msg, int len) {
-    size_t n = fwrite(msg, 1, len, stdout);
+    fwrite(msg, 1, len, stdout);
 }
 void defaultFlushFunc() {
     fflush(stdout);
@@ -43,13 +41,12 @@ LogStream::LogStream()
 
 // 析构前必须刷新缓冲区
 LogStream::~LogStream() {
-    // printf("go die!\n");
     _end = _cur;
     flush();
 }
 
 void LogStream::flush() {
-    g_output(_buf, static_cast<size_t>(_end - _buf));
+    g_output(_buf, completeLogLen());
     g_flush();
 }
 
@@ -75,21 +72,29 @@ void LogStream::makeLog(const char *filename, int line, Logger::LEVEL level, con
         *this << ' ' << func << " - ";
 }
 
-template<typename T>
-std::string LogStream::formatInteger(T v) {
-    std::string s;
-    T i = v;
-    do {
-        s.push_back(digits[i%10]);
-        i /= 10;
-    } while(i != 0);
-    if (v < 0)
-        s.push_back('-');
-    std::reverse(s.begin(), s.end());
-    return s;
+void LogStream::append(const char *p, int len) {
+    if (static_cast<int>(avail()) > len) {
+        memcpy(_cur, p, len);
+        _cur += len;
+    }
+    else {
+        // 往日志后端发送数据，并更新 buffer
+        // 如果一条日志制作到一半突然 buffer 空间不够怎么办？
+        // 把 _buf ~ _end 的内容拷贝给后端，再把 _end ~ _cur 的内容移到 _buf 最前面并重新执行以下指令就行了
+        // for test:
+        // 测试时，用户不断写日志，必定导致 buffer 不够，此时将 _buf ~ _end 的内容输出到控制台查看是否有误
+        // 前端的 flush 是将 buffer 中数据刷新到后端去。
+        flush();
+
+        memmove(_buf, _end, remainUncompleteLogLen());
+        _cur = _buf + remainUncompleteLogLen();
+        _end = _buf;
+        append(p, len);
+    }
 }
 
-
+// 用户态的 函数
+// 根据 gettimeofday 返回的 micro seconds 来计算 年月日 时分秒
 int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
 
 char *LogStream::formatTime() {

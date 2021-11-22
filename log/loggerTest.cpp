@@ -1,8 +1,4 @@
-#include "logger.h"
-#include "logStream.h"
-#include "asyncLogging.h"
-#include "timestamp.h"
-#include "thread.h"
+#include "flog.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -35,7 +31,7 @@ void TestThroughput() {
         Timestamp end = Timestamp::now();
         int64_t diff = end - start;
         double throughput = (10 * kNumLogs * 100) * 1.0 / diff;
-        printf("average time: %f MB/s\n", throughput);
+        printf("TestTroughput average time: %f MB/s\n", throughput);
     }
 }
 
@@ -62,7 +58,7 @@ void routine() {
         for (int i = 0;i < 10;++i) {
             // s 的长度为 100 字节
             for (int i = 0;i < kNumLogs;++i) { // 前端最多缓存 1000 * 100 字节
-                LOG_WARN << out.c_str() << i << "\n";
+                LOG_DEBUG << out.c_str() << i << "\n";
             }
         }
 
@@ -81,7 +77,6 @@ void TestMultiThreads() {
         t[i].start();
     }
 
-    int tmp;
     int j = 20;
     while (j--) {
         while (a_counter1 != 0) {}
@@ -105,12 +100,10 @@ void TestMultiThreads() {
 int main(int argc, char *argv[]) {
     if (argc > 1)
         kNThreads = atoi(argv[1]);
-    std::unique_ptr<AsyncLoggingWatcher> watcher(new AsyncLoggingWatcher);
-    std::unique_ptr<LoggerWatcher> lw(new LoggerWatcher); // 用于退出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
-    // TestThroughput();
+    AsyncLogInit log(argv[0]);
+    TestThroughput();
     // TestRollFile();
     TestMultiThreads();
-    lw = nullptr;
-    watcher->stopAsyncLogging();
+    log.destroy();
     return 0;
 }

@@ -1,6 +1,5 @@
+#include "currentThread.h"
 #include <sys/syscall.h>
-#include <unistd.h>
-using namespace std;
 namespace CurrentThread {
 __thread int tid_cache = 0;
 // __thread const char *name_cache = 0;

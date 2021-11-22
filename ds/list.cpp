@@ -25,7 +25,7 @@ void intInsert() {
         printf("inset to pos %d, value: %d\n", i, i);
         ls.insert(i, i);
     }
-    for (int i = 0;i < ls.len();++i) {
+    for (size_t i = 0;i < ls.len();++i) {
         assert(ls.get(i) == i);
     }
     // test destructor, if failed will resulting in memleak.
@@ -38,7 +38,7 @@ void strInsert() {
     ls.insertTail("hello");
     ls.insertTail(" world,");
     ls.insertTail(" I am cwp.");
-    for (int i = 0;i < ls.len();++i) {
+    for (size_t i = 0;i < ls.len();++i) {
         printf("%s", ls.get(i).c_str());
     }
     printf("\n");

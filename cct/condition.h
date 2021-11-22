@@ -2,6 +2,7 @@
 #define CONDITION_H
 
 #include "mutex.h"
+#include <stdint.h>
 class Condition {
 public:
     Condition(MutexLock &mutex) 

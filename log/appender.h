@@ -29,7 +29,6 @@ public:
     // 将 日志 追加到 文件中去
     void append(const char *logline, int len) override {
         fwrite(logline, len, 1, _openFile);
-        // fflush(_openFile);
     }
 private:
     const char* _basename;

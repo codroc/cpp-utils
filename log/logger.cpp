@@ -4,11 +4,13 @@
 __thread LogStream* t_pLogStream = 0;
 __thread struct tm *t_tm = 0;
 
+// static variable initialization
 Logger::LEVEL Logger::level = Logger::LEVEL::NONE;
 MutexLock Logger::lock;
+MutexLock Logger::initlock;
 Logger* Logger::instance = 0;
-std::vector<std::unique_ptr<LogStream>> Logger::_streams;
-std::vector<struct tm*> Logger::_tms;
+std::vector<std::unique_ptr<LogStream>> Logger::streams;
+std::vector<struct tm*> Logger::tms;
 
 // LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
@@ -32,27 +34,20 @@ void Logger::init() {
     setLevel(LEVEL::WARN); // default is warn
 }
 
-
-LogStream& Logger::stream(const char *filename, int line, LEVEL level) {
+LogStream& Logger::stream(const char *filename, int line, LEVEL level, const char *func) {
     if (t_pLogStream == 0) {
         MutexGuard guard(initlock);
         std::unique_ptr<LogStream> up(new LogStream()); // RAII
         t_pLogStream = up.get();
-        _streams.push_back(std::move(up));
+        streams.push_back(std::move(up));
 
+        // fix me: 也用 unique_ptr 来 RAII，不过 不能用 delete 而是用 free 释放资源
         t_tm = (struct tm*)malloc(sizeof(struct tm));
-        _tms.push_back(t_tm);
+        tms.push_back(t_tm);
     }
-    t_pLogStream->makeLog(filename, line, level);
+    if (func == 0)
+        t_pLogStream->makeLog(filename, line, level);
+    else
+        t_pLogStream->makeLog(filename, line, level, func);
     return *t_pLogStream;
 }
-
-
-LogStream& Logger::stream(const char *filename, int line, LEVEL level, const char *func) {
-    if (t_pLogStream == 0)
-        t_pLogStream = new LogStream();
-    t_pLogStream->makeLog(filename, line, level, func);
-    return *t_pLogStream;
-}
-
-

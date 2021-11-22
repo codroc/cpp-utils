@@ -104,7 +104,7 @@ private:
 
 class AsyncLoggingWatcher {
 public:
-    AsyncLoggingWatcher();
+    AsyncLoggingWatcher(const char* progname);
     void stopAsyncLogging() { _upAsyncLogging->stop(); }
 private:
     std::unique_ptr<AsyncLogging> _upAsyncLogging;

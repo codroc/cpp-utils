@@ -17,18 +17,11 @@ void AsyncLogOutput(const char *msg, int len) {
     g_asyncLog->append(msg, len);
 }
 
-// AsyncLoggingWatcher 一定要先于 日志前端 创建出来前 被调用，也就是 一定要先开启后端在开前端 
-// int main() {
-//  AsyncLoggingWatcher watcher();      
-//  ....
-//  LOG_WARN << "WARN!\n";
-// }
-AsyncLoggingWatcher::AsyncLoggingWatcher()
-    : _upAsyncLogging(new AsyncLogging("mylog", 1000*1000*100, 3))
+AsyncLoggingWatcher::AsyncLoggingWatcher(const char* progname)
+    : _upAsyncLogging(new AsyncLogging(progname, 1000*1000*100, 3))
 {
     g_asyncLog = _upAsyncLogging.get();
     LogStream::setOutputFunc(AsyncLogOutput);
-    // printf("asycn init finish\n");
     _upAsyncLogging->start();
 }
 
@@ -78,9 +71,9 @@ void AsyncLogging::append(const char *logline, int len) {
 
 extern int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
 
-class LogStream;
+// class LogStream;
 
-extern template std::string LogStream::formatInteger<int>(int v);
+// extern template std::string formatInteger<int>(int v);
 
 
 // rollFile 是根据 rollSize 来进行文件更新的，
@@ -99,7 +92,7 @@ std::string AsyncLogging::rollFile() {
     ret.append(tmp);
 
     ret.push_back('.');
-    ret.append(LogStream::formatInteger(static_cast<int>(getpid())).c_str());
+    ret.append(formatInteger(static_cast<int>(getpid())).c_str());
 
     ret.append(".log0");
     // printf("start roll file! %s\n", ret.c_str());

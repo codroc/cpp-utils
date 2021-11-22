@@ -20,10 +20,6 @@ public:
         ERROR,
         FATAL,
     };
-    // enum class APPENDER {
-    //     CONSOLE,
-    //     FFILE,
-    // };
 
     static self* getInstance();
     void init();
@@ -32,22 +28,16 @@ public:
     static void  setLevel(LEVEL l) { level = l; }
     static LEVEL getLevel() { return level; }
 
-    // // 输出目的地}
-    // void     setAppender(APPENDER appender) { _appender = appender; }
-    // APPENDER getAppender() { return _appender; }
-
     // stream 
-    // LogStream& stream(const char *filename, int line);
-    LogStream& stream(const char *filename, int line, LEVEL level);
-    LogStream& stream(const char *filename, int line, LEVEL level, const char *func);
+    LogStream& stream(const char *filename, int line, LEVEL level, const char *func = 0);
 
     // for flush buffer, and release resource
     static void release() {
         if (instance) {
-            _streams.clear();
-            while(!_tms.empty()) {
-                struct tm* tm = _tms.back();
-                _tms.pop_back();
+            streams.clear();
+            while(!tms.empty()) {
+                struct tm* tm = tms.back();
+                tms.pop_back();
                 free(tm);
             }
             delete instance;
@@ -64,14 +54,14 @@ private:
     // 线程安全
     static MutexLock lock;
 
-    // 用于 _streams.push_back and _tms.push_back 时的线程安全
-    MutexLock initlock;
+    // 用于 streams.push_back and _tms.push_back 时的线程安全
+    static MutexLock initlock;
 
     // stream
     // 这里设计成每个线程 一个 stream 不就能避免 lock contention 了嘛！
 
-    static std::vector<std::unique_ptr<LogStream>> _streams;
-    static std::vector<struct tm*> _tms;
+    static std::vector<std::unique_ptr<LogStream>> streams;
+    static std::vector<struct tm*> tms;
 };
 
 #define LOG_TRACE if (Logger::getLevel() <= Logger::LEVEL::TRACE) \
@@ -86,6 +76,8 @@ private:
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::ERROR)
 // fatal 必定退出进程
 #define LOG_FATAL Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::FATAL)
+
+// 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
 class LoggerWatcher {
 public:

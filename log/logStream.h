@@ -2,14 +2,28 @@
 #define LOGSTREAM_H
 
 #include "logger.h"
-#include <stdio.h> // for test
-#include <unistd.h> // for pid_t
+// #include <stdio.h> // for test
+// #include <unistd.h> // for pid_t
 #include <string.h>
 #include <string>
+#include <algorithm>
 
-namespace CurrentThread {
-    pid_t gettid();
+// format integer
+const char digits[] = "0123456789";
+template<typename T>
+std::string formatInteger(T v) {
+    std::string s;
+    T i = v;
+    do {
+        s.push_back(digits[i%10]);
+        i /= 10;
+    } while(i != 0);
+    if (v < 0)
+        s.push_back('-');
+    std::reverse(s.begin(), s.end());
+    return s;
 }
+
 class LogStream {
 public:
     using self = LogStream;
@@ -30,18 +44,21 @@ public:
     void makeLog(const char *filename, int line, Logger::LEVEL level, const char *func);
 
     // 将 buffer 中内容刷新到 日志后端
+    // 注意这个内容不是指 buffer 中的所有字符，而是 完整的 n 条 日志
+    // 由 _end 标记最后一条完整日志的结尾
     void flush();
 
-    // format integer
-    template <typename T>
-    static std::string formatInteger(T v);
     // format time
-    char *formatTime();
+    static char *formatTime();
 
     // 功能函数
     void reset() { _cur = _buf; }
-    int avail()  { return end() - _cur; }
-    const char* end() { return sizeof(_buf) + _buf; }
+    // int avail()  { return end() - _cur; }
+    int avail()  { return sizeof(_buf) + _buf - _cur; }
+    // 完整日志长度
+    size_t completeLogLen() { return static_cast<size_t>(_end - _buf); }
+    // 剩余不完整日志长度
+    size_t remainUncompleteLogLen() { return static_cast<size_t>(_cur - _end); }
 
     // over load operator<<
     self& operator<<(bool v) {
@@ -77,26 +94,7 @@ public:
 private:
     // append 往 _buf 中追加字符
     // operator<< 基于此实现
-    void append(const char *p, int len) {
-        if (static_cast<size_t>(avail()) > len) {
-            memcpy(_cur, p, len);
-            _cur += len;
-        }
-        else {
-            // 往日志后端发送数据，并更新 buffer
-            // 如果一条日志制作到一半突然 buffer 空间不够怎么办？
-            // 把 _buf ~ _end 的内容拷贝给后端，再把 _end ~ _cur 的内容移到 _buf 最前面并重新执行以下指令就行了
-            // for test:
-            // 测试时，用户不断写日志，必定导致 buffer 不够，此时将 _buf ~ _end 的内容输出到控制台查看是否有误
-            // 前端的 flush 是将 buffer 中数据刷新到后端去。
-            flush();
-
-            memmove(_buf, _end, (size_t)(_cur - _end));
-            _cur = _buf + static_cast<size_t>(_cur - _end);
-            _end = _buf;
-            append(p, len);
-        }
-    }
+    void append(const char *p, int len);
 private:
     // buffer 我们假设一条日志的长度不超过 100 字节，Buffer 可缓存 1000 条日志
     static const int kBufferSize = 1000 * 100; // 100KB

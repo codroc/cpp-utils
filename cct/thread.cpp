@@ -1,13 +1,16 @@
 #include "thread.h"
+#include "currentThread.h"
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <cassert>
 #include <cstring>
 
 // declare
-namespace CurrentThread {
-    pid_t gettid();
-}
+// namespace CurrentThread {
+//     pid_t gettid();
+// }
+// using namespace CurrentThread;
+// pid_t CurrentThread::gettid();
 
 Thread::Thread()
     : _started(false),
@@ -61,10 +64,10 @@ ThreadData::ThreadData(threadFunc start_routine, pid_t *tid, const std::string &
           _name(std::move(name))
 {}
 
-pid_t gettid() { return CurrentThread::gettid(); }
+// pid_t gettid() { return CurrentThread::gettid(); }
 
 void ThreadData::beforeRoutine() {
-    *_tid = gettid();
+    *_tid = CurrentThread::gettid();
     _tid = 0;
     // printf("User routine is going to start by thread: %s\n", _name.c_str());
 }
