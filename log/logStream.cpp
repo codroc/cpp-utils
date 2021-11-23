@@ -153,6 +153,25 @@ LogStream& LogStream::operator<<(unsigned long long v) {
     return *this;
 }
 
+// format hex
+const char hex[] = "0123456789abcdef";
+std::string formatHex(unsigned long long v) {
+    unsigned long long tmp = v;
+    std::string ret;
+    while (tmp) {
+        ret.push_back(hex[tmp%16]);
+        tmp /= 16;
+    }
+    ret.append("x0");
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+}
+
+LogStream& LogStream::operator<<(void* pv) {
+    *this << formatHex((unsigned long long)pv).c_str();
+    return *this;
+}
+
 int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone)
 {
     static const int kHoursInDay = 24;

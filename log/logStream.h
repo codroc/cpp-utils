@@ -73,7 +73,7 @@ public:
     self& operator<<(unsigned long);
     self& operator<<(long long);
     self& operator<<(unsigned long long);
-    // self& operator<<(const void*);
+    self& operator<<(void* pv); 
     self& operator<<(float v) {
         *this << static_cast<double>(v);
         return *this;
@@ -91,6 +91,7 @@ public:
         return *this;
     }
     self& operator<<(const unsigned char* str) { return operator<<(reinterpret_cast<const char*>(str)); }
+    self& operator<<(const std::string& str) { return operator<<(str.c_str()); }
 private:
     // append 往 _buf 中追加字符
     // operator<< 基于此实现
