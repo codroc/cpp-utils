@@ -23,6 +23,8 @@ private:
 bool operator<(Timestamp lhs, Timestamp rhs);
 bool operator==(Timestamp lhs, Timestamp rhs);
 int64 operator-(Timestamp high, Timestamp low);
+Timestamp operator+(Timestamp high, Timestamp low);
+Timestamp operator+(Timestamp high, int seconds);
 // inline bool operator<(Timestamp lhs, Timestamp rhs) {
 //     return lhs.microSeconds() < rhs.microSeconds();
 // }

@@ -11,6 +11,14 @@ int64 operator-(Timestamp high, Timestamp low) {
     return static_cast<int64>(high.microSeconds() - low.microSeconds());
 }
 
+Timestamp operator+(Timestamp high, Timestamp low) {
+    return Timestamp(high.microSeconds() + low.microSeconds());
+}
+
+Timestamp operator+(Timestamp high, int seconds) {
+    return Timestamp(high.microSeconds() + seconds * Timestamp::kMicroSecondsPerSecond);
+}
+
 Timestamp Timestamp::now() {
     // struct timeval {
     //     time_t      tv_sec;     /* seconds */
