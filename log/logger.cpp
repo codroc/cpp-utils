@@ -12,7 +12,7 @@ Logger* Logger::instance = 0;
 std::vector<std::unique_ptr<LogStream>> Logger::streams;
 std::vector<struct tm*> Logger::tms;
 
-// LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
+LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
 Logger* Logger::getInstance() {
     if (instance == 0) {
