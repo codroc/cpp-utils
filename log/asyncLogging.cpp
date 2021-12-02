@@ -102,6 +102,7 @@ std::string AsyncLogging::rollFile() {
     char newfile[40];
     memset(newfile, 0, sizeof(newfile));
     memcpy(newfile, ret.c_str(), ret.size());
+    args[0] = "jiaoben";
     args[1] = newfile;
     args[2] = 0;
     pid_t pid;
