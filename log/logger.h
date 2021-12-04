@@ -27,22 +27,17 @@ public:
     // 日志级别
     static void  setLevel(LEVEL l) { level = l; }
     static LEVEL getLevel() { return level; }
+    // 缓冲级别
+    static const int kFullBuffer; // 全缓冲，及默认 缓冲
+    static const int kLineBuffer; // 行缓冲
+    static void setBufferLevel(int level) { bufferLevel = level; }
+    static int  getBufferLevel() { return bufferLevel; }
 
     // stream 
     LogStream& stream(const char *filename, int line, LEVEL level, const char *func = 0);
 
     // for flush buffer, and release resource
-    static void release() {
-        if (instance) {
-            streams.clear();
-            while(!tms.empty()) {
-                struct tm* tm = tms.back();
-                tms.pop_back();
-                free(tm);
-            }
-            delete instance;
-        }
-    }
+    static void release();
 private:
     // 不允许外部构造
     Logger() = default;
@@ -50,6 +45,7 @@ private:
 private:
     static self* instance;
     static LEVEL level;
+    static int bufferLevel; // 0 默认缓冲，1 按行缓冲
     // APPENDER     _appender;
     // 线程安全
     static MutexLock lock;

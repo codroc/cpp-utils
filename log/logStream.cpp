@@ -1,6 +1,8 @@
 #include "logStream.h"
 #include "timestamp.h"
 #include "currentThread.h"
+
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
@@ -72,10 +74,31 @@ void LogStream::makeLog(const char *filename, int line, Logger::LEVEL level, con
         *this << ' ' << func << " - ";
 }
 
+void LogStream::flushLine(char* ppos) {
+    if (_buf != ppos) {
+        ppos++; // 往后移动一个字符，及前一个字符是 '\n'
+        g_output(_buf, ppos - _buf);
+        g_flush();
+        size_t len = (size_t)(_cur - ppos);
+        ::memmove(_buf, ppos, len);
+        _cur = _buf + len;
+        _end = _buf + (_end - ppos);
+    }
+}
+
 void LogStream::append(const char *p, int len) {
     if (static_cast<int>(avail()) > len) {
         memcpy(_cur, p, len);
         _cur += len;
+        if (Logger::getBufferLevel() == Logger::kLineBuffer) {
+            // 定位 '\n' 在 buf 中最后一次出现的位置 pos，把 pos 之前的字符全部刷新到后端 buf
+            char *tmp = _cur;
+            while (tmp-- > _buf) {
+                if (*tmp == '\n')
+                    break;
+            }
+            flushLine(tmp);
+        }
     }
     else {
         // 往日志后端发送数据，并更新 buffer
@@ -104,7 +127,7 @@ char *LogStream::formatTime() {
     int64 us = microSecs % Timestamp::kMicroSecondsPerSecond;
     if (secs != t_lastSecs) {
         // need to flush log to back-end
-        if (t_lastSecs != 0)
+        if (t_lastSecs != 0 && Logger::getBufferLevel() == Logger::kFullBuffer)
             t_needFlush = 1;
         t_lastSecs = secs;
         FastSecondToDate(static_cast<time_t>(secs), t_tm, 8);

@@ -96,6 +96,8 @@ private:
     // append 往 _buf 中追加字符
     // operator<< 基于此实现
     void append(const char *p, int len);
+    // 行缓冲 刷新， ppos 是指向 字符 '\n' 的指针
+    void flushLine(char* ppos);
 private:
     // buffer 我们假设一条日志的长度不超过 100 字节，Buffer 可缓存 1000 条日志
     static const int kBufferSize = 1000 * 100; // 100KB
