@@ -82,7 +82,8 @@ public:
             return nullptr;
         return std::dynamic_pointer_cast<ConfigVar<T>>(it->second); 
     }
-    // 查找相关 配置变量，如果找不到 则创建；找到则返回 对应的智能指针
+    // 查找相关 配置变量，如果找不到 则创建；找到则返回 对应的智能指针,
+    // 因为涉及到 val 的具体类型，所以不能用于 yaml 配置文件
     template<class T>
     static typename ConfigVar<T>::ptr lookup(const std::string& name, const T& val, const std::string& description = "") {
         auto sp = lookup<T>(name);
@@ -93,6 +94,13 @@ public:
         }
         return sp;
     }
+
+    // 从 yaml 配置文件中读取 配置变量
+    static void loadFromYaml(const char* filename);
+    static ConfigVarBase::ptr find(const std::string& name);
+
+    // 遍历所有的 config var，并对每一个 ptr 做 lambda
+    static void traverse(std::function<void(ConfigVarBase::ptr&)>);
 private:
     // map 用于管理所有的 ConfigVarBase::ptr，其实就是所有的 ConfigVar
     // 全局唯一
