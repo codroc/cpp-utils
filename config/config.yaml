@@ -1,4 +1,19 @@
 system:
     port: 8080
     fee:  2.5
-    ip:   "127.0.0.1"
+    ip:   "192.168.0.109"
+    vec_int: 
+        - 30
+        - 40
+    list_int: [22,22]
+    set_int: [333, 212121,33]
+    unordered_set_int: [100, 60, 2000, 10, 10]
+    map_name_phone:
+        cwp: "18268665603"
+        codroc: "2020202020"
+        cc: "913035047"
+    umap_name_phone:
+        cwp: "18268665603"
+        codroc: "2020202020"
+        cc: "913035047"
+    nn: 1000

@@ -17,27 +17,57 @@ ConfigVarBase::ptr Config::find(const std::string& name) {
     return it->second;
 }
 
-void fromYaml(const std::string& name, const YAML::Node& node) {
+void listAllNodes(const std::string& name, const YAML::Node& node, std::vector<std::pair<std::string, YAML::Node>>& allNodes) {
+    allNodes.push_back(std::make_pair(name, node));
     if (node.IsNull()) {
     }
     else if (node.IsScalar()) {
-        ConfigVarBase::ptr p = Config::find(name);
-        if (!p)
-            Config::lookup(name, node.Scalar());
-        else
-            p->fromString(node.Scalar());
+    //    // 如果遍历到常量了，则说明已经可以构建一个配置变量了。
+    //    ConfigVarBase::ptr p = Config::find(name);
+    //    if (!p) {
+    //        // 找不到约定的配置变量，而出现在了 .yaml 文件中
+    //        Config::lookup(name, node.Scalar());
+    //    }
+    //    else
+    //        p->fromString(node.Scalar());
     }
-    else if (node.IsMap() || node.IsSequence()) {
+    else if (node.IsSequence()) {
+    //    ConfigVarBase::ptr p = Config::find(name);
+    //    std::stringstream ss;
+    //    ss << node;
+    //    if (!p) {
+    //        // 找不到约定的配置变量，而出现在了 .yaml 文件中
+    //        Config::lookup(name, ss.str());
+    //    }
+    //    else
+    //        p->fromString(ss.str());
+    //    for (auto it = node.begin(); it != node.end(); ++it)
+    //        listAllNodes(name, *it, allNodes);
+    }
+    else if (node.IsMap()) {
         for (auto it = node.begin(); it != node.end(); ++it) {
-            fromYaml(name.empty() ? it->first.as<std::string>() : 
-                    name + "." + it->first.as<std::string>(), it->second);
+            listAllNodes(name.empty() ? it->first.as<std::string>() : 
+                    name + "." + it->first.Scalar(), it->second, allNodes);
         }
     }
 }
 
 void Config::loadFromYaml(const char* filename) {
     YAML::Node node = YAML::LoadFile(filename);
-    fromYaml("", node);
+    std::vector<std::pair<std::string, YAML::Node>> allNodes;
+    listAllNodes("", node, allNodes);
+
+    for (auto i : allNodes) {
+        std::string name = i.first;
+        if (name.empty())
+            continue;
+        ConfigVarBase::ptr p = Config::find(name);
+        if (p) {
+            std::stringstream ss;
+            ss << i.second;
+            p->fromString(ss.str());
+        }
+    }
 }
 
 void Config::traverse(std::function<void(ConfigVarBase::ptr&)> func) {
