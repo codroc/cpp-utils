@@ -3,6 +3,8 @@
 #include "logger.h"
 
 ConfigVar<int>::ptr g_sp_int = Config::lookup("system.port", (int)2222, "system port");
+ConfigVar<float>::ptr g_sp_fint = Config::lookup("system.port", (float)2222, "system port");
+#if 0
 ConfigVar<float>::ptr g_sp_float = Config::lookup("system.fee", (float)6.5, "system fee");
 ConfigVar<std::string>::ptr g_sp_string = Config::lookup("system.ip", std::string("127.0.0.1"), "system ip");
 ConfigVar<std::vector<int>>::ptr g_sp_vec_int = Config::lookup("system.vec_int", std::vector<int>{1,2}, "system vec int");
@@ -18,6 +20,7 @@ ConfigVar<std::unordered_map<std::string, std::string>>::ptr g_sp_umap_name_phon
     Config::lookup("system.umap_name_phone", 
             std::unordered_map<std::string,std::string>{{"cwp", "15057760108"}},
             "system umap int int");
+#endif
 
 int main(int argc, char** argv) {
     Logger::setBufferLevel(Logger::kLineBuffer);

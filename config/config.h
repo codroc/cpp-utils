@@ -42,6 +42,8 @@ public:
     virtual std::string toString() = 0;
     // 从字符串初始化值
     virtual bool fromString(const std::string& val) = 0;
+    
+    virtual std::string getTypeName() const = 0;
 private:
     std::string _name;
     std::string _description;
@@ -280,6 +282,8 @@ public:
     
     T getValue() const { return _val; }
     void setValue(const T& v) { _val = v; }
+
+    std::string getTypeName() const override { return typeid(T).name(); }
 private:
     T _val;
 };
@@ -302,9 +306,21 @@ public:
     static typename ConfigVar<T>::ptr lookup(const std::string& name, const T& val, const std::string& description = "") {
         auto sp = lookup<T>(name);
         if (!sp) {
-            // 没找到，则创建
-            sp.reset(new ConfigVar<T>(val, name, description));
-            _configVars[name] = sp;
+            // 没找到：有 2 中可能
+            // 1. map 中没有以 name 为 key 的 entry
+            // 2. map 中有，但是 type 不一致，导致 std::dynamic_pointer_cast<ConfigVar<T>>(it->second) 返回 nullptr
+            auto it = _configVars.find(name);
+            if (it != _configVars.end()) {
+                // 情况 2
+                LOG_INFO << "Config::lookup [" << name << ":"
+                         << it->second->toString() << "] type is not consistency! " << typeid(T).name() 
+                         << " is provided, but " << it->second->getTypeName() << " is needed.\n";
+            }
+            else {
+                // 情况 1
+                sp.reset(new ConfigVar<T>(val, name, description));
+                _configVars[name] = sp;
+            }
         }
         return sp;
     }
