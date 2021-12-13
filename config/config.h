@@ -65,7 +65,7 @@ public:
     std::string operator()(const std::vector<T>& vec) {
         YAML::Node node = YAML::Load("[]");
         for (auto& v : vec)
-            node.push_back(v);
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();
@@ -79,11 +79,11 @@ public:
     std::vector<T> operator()(const std::string& str) {
         std::vector<T> vec;
         YAML::Node node = YAML::Load(str);
-        // assert(node.IsSequence());
-        for (auto it = node.begin(); it != node.end(); ++it) {
-            // assert(it->IsScalar());
-            // std::cout << "LexicalCast: " << LexicalCast<std::string, T>()(it->Scalar()) << "\n";
-            vec.push_back(LexicalCast<std::string, T>()(it->Scalar()));
+        std::stringstream ss;
+        for (size_t i = 0;i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            vec.push_back(LexicalCast<std::string, T>()(ss.str()));
         }
         return vec;
     }
@@ -96,7 +96,7 @@ public:
     std::string operator()(const std::list<T>& vec) {
         YAML::Node node = YAML::Load("[]");
         for (auto& v : vec)
-            node.push_back(v);
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();
@@ -110,10 +110,11 @@ public:
     std::list<T> operator()(const std::string& str) {
         std::list<T> vec;
         YAML::Node node = YAML::Load(str);
-        // assert(node.IsSequence());
-        for (auto it = node.begin(); it != node.end(); ++it) {
-            // assert(it->IsScalar());
-            vec.push_back(LexicalCast<std::string, T>()(it->Scalar()));
+        std::stringstream ss;
+        for (size_t i = 0;i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            vec.push_back(LexicalCast<std::string, T>()(ss.str()));
         }
         return vec;
     }
@@ -126,7 +127,7 @@ public:
     std::string operator()(const std::set<T>& vec) {
         YAML::Node node = YAML::Load("[]");
         for (auto& v : vec)
-            node.push_back(v);
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();
@@ -140,10 +141,11 @@ public:
     std::set<T> operator()(const std::string& str) {
         std::set<T> st;
         YAML::Node node = YAML::Load(str);
-        // assert(node.IsSequence());
-        for (auto it = node.begin(); it != node.end(); ++it) {
-            // assert(it->IsScalar());
-            st.insert(LexicalCast<std::string, T>()(it->Scalar()));
+        std::stringstream ss;
+        for (size_t i = 0;i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            st.insert(LexicalCast<std::string, T>()(ss.str()));
         }
         return st;
     }
@@ -156,7 +158,7 @@ public:
     std::string operator()(const std::unordered_set<T>& vec) {
         YAML::Node node = YAML::Load("[]");
         for (auto& v : vec)
-            node.push_back(v);
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();
@@ -170,10 +172,11 @@ public:
     std::unordered_set<T> operator()(const std::string& str) {
         std::unordered_set<T> st;
         YAML::Node node = YAML::Load(str);
-        // assert(node.IsSequence());
-        for (auto it = node.begin(); it != node.end(); ++it) {
-            // assert(it->IsScalar());
-            st.insert(LexicalCast<std::string, T>()(it->Scalar()));
+        std::stringstream ss;
+        for (size_t i = 0;i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            st.insert(LexicalCast<std::string, T>()(ss.str()));
         }
         return st;
     }
@@ -186,7 +189,7 @@ public:
     std::string operator()(const std::map<K, V>& mp) {
         YAML::Node node;
         for (auto it = mp.begin(); it != mp.end(); ++it) {
-            node.force_insert(it->first, it->second);
+            node.force_insert(it->first, YAML::Load(LexicalCast<V, std::string>()(it->second)));
         }
         std::stringstream ss;
         ss << node;

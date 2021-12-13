@@ -17,3 +17,29 @@ system:
         codroc: "2020202020"
         cc: "913035047"
     nn: 1000
+
+class:
+    person:
+        name: "codroc"
+        age: 25
+        sex: true
+    vec_person:
+        - name: "cwp"
+          age: 25
+          sex: true
+        - name: "cc"
+          age: 18
+          sex: false
+    map_vec_person:
+        g1:
+            - name: "cwp"
+              age: 25
+              sex: true
+            - name: "cc"
+              age: 18
+              sex: false
+        g2:
+            - name: "caicai"
+              age: 18
+              sex: false
+            
