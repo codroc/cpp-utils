@@ -30,7 +30,23 @@ public:
     std::string name;
     int age;
     bool sex;
+
+    std::string toString() const {
+        std::stringstream ss;
+        YAML::Node node;
+        node["name"] = name;
+        node["age"] = age;
+        node["sex"] = sex;
+        ss << node;
+        return ss.str();
+    }
 };
+
+bool operator==(const Person& lhs, const Person& rhs) {
+    return lhs.name == rhs.name
+        && lhs.age == rhs.age
+        && lhs.sex == rhs.sex;
+}
 
 // from std::string to Person
 template<>
@@ -68,6 +84,10 @@ ConfigVar<std::map<std::string, std::vector<Person>>>::ptr g_sp_map_vec_person =
 
 int main(int argc, char** argv) {
     Logger::setBufferLevel(Logger::kLineBuffer);
+    g_sp_person->setOnChangeCallBack([&](const Person& oldVal, const Person& newVal) {
+                LOG_INFO << g_sp_person->getName() << " old value: " << oldVal.toString() << " - new value: " 
+                         << newVal.toString() << "\n"; 
+            });
 
     Config::traverse([](ConfigVarBase::ptr& ptr) {
             LOG_INFO << "before: " << ptr->getName() << " = " << ptr->toString() << "\n";

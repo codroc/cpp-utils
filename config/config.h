@@ -251,6 +251,7 @@ template<class T, class FromStr = LexicalCast<std::string, T>, class ToStr = Lex
 class ConfigVar : public ConfigVarBase {
 public:
     using ptr = std::shared_ptr<ConfigVar>;
+    using OnChangeCallBack = std::function<void(const T& oldVal, const T& newVal)>;
     ConfigVar(const T& val, const std::string& name, const std::string description = "")
         : ConfigVarBase(name, description),
           _val(val)
@@ -284,11 +285,21 @@ public:
     }
     
     T getValue() const { return _val; }
-    void setValue(const T& v) { _val = v; }
+    void setValue(const T& v) {
+        if (v == _val)
+            return;
+        if (_cb)
+            _cb(_val, v);
+        _val = v;
+    }
 
     std::string getTypeName() const override { return typeid(T).name(); }
+
+    void setOnChangeCallBack(OnChangeCallBack cb) { _cb = cb; }
+    void delOnChangeCallBack() { _cb = nullptr; }
 private:
     T _val;
+    OnChangeCallBack _cb;
 };
 
 class Config {
