@@ -12,14 +12,14 @@
 // using namespace CurrentThread;
 // pid_t CurrentThread::gettid();
 
+std::atomic<int> Thread::threadNum(0);
 Thread::Thread()
     : _started(false),
       _joined(false),
       _thread(),
       _tid(0), 
       _name(),
-      _start_routine(0),
-      _threadNum(0)
+      _start_routine(0)
 {
     setDefaultName();
 }
@@ -29,19 +29,17 @@ Thread::Thread(threadFunc start_routine, const std::string& s)
       _thread(),
       _tid(0),
       _name(s),
-      _start_routine(std::move(start_routine)),
-      _threadNum(0)
+      _start_routine(std::move(start_routine))
 {
     setDefaultName();
 }
 
 void Thread::setDefaultName() {
-    int threadNum = _threadNum.fetch_add(1, std::memory_order_relaxed); // 只需要保证原子即可, 因为它就是一个 counter，对 counter 做 increament 只要求原子性
+    int tn = threadNum.fetch_add(1, std::memory_order_relaxed); // 只需要保证原子即可, 因为它就是一个 counter，对 counter 做 increament 只要求原子性
     if (_name.empty()) {
-        char buf[16];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "thread%d", threadNum);
-        _name = buf;
+        std::string name = "thread#";
+        name += std::to_string(tn);
+        _name = name;
     }
 }
 class ThreadData {
@@ -69,6 +67,7 @@ ThreadData::ThreadData(threadFunc start_routine, pid_t *tid, const std::string &
 void ThreadData::beforeRoutine() {
     *_tid = CurrentThread::gettid();
     _tid = 0;
+    ::pthread_setname_np(::pthread_self(), _name.c_str());
     // printf("User routine is going to start by thread: %s\n", _name.c_str());
 }
 void ThreadData::afterRoutine() {

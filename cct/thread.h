@@ -35,7 +35,7 @@ private:
     pid_t     _tid;
     std::string _name;
     threadFunc  _start_routine;
-    std::atomic<int> _threadNum;
+    static std::atomic<int> threadNum;
 };
 
 #endif
