@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 #include <atomic>
+#include "sem.h"
 
 // int
 // pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
@@ -36,6 +37,9 @@ private:
     std::string _name;
     threadFunc  _start_routine;
     static std::atomic<int> threadNum;
+    // semaphore 
+    // 等待子线程 run 起来
+    Semaphore _sem;
 };
 
 #endif
