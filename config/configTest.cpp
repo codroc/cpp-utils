@@ -77,26 +77,57 @@ public:
     }
 };
 
+#if 0
 ConfigVar<Person>::ptr g_sp_person = Config::lookup("class.person", Person(), "class person");
 ConfigVar<std::vector<Person>>::ptr g_sp_vec_person = Config::lookup("class.vec_person", std::vector<Person>(), "class persons");
 ConfigVar<std::map<std::string, std::vector<Person>>>::ptr g_sp_map_vec_person = 
     Config::lookup("class.map_vec_person", std::map<std::string, std::vector<Person>>(), "class map vec persons");
+#endif
+
+ConfigVar<Person>::ptr g_sp_thread_safe_person = 
+    Config::lookup("multiThread.thread_safe_person", Person(), "multiThread: thread safe Person");
+
+#include <atomic>
+std::atomic<int> num;
+void threadRoutine() {
+    std::string s = "config_thread";
+    std::stringstream ss;
+    ss << num++;
+    s += ss.str() + ".yaml";
+    Config::loadFromYaml(s.c_str());
+    LOG_INFO << g_sp_thread_safe_person ->getName() << " = " << g_sp_thread_safe_person ->toString() << "\n";
+}
+
+void testMultiThread() {
+    const int kNumThreads = 3;
+    Thread t[kNumThreads];
+    for (int i = 0;i < kNumThreads; ++i) {
+        t[i].addThreadFunc(threadRoutine);
+        t[i].start();
+    }
+    
+    for (int i = 0;i < kNumThreads; ++i) {
+        t[i].join();
+    }
+}
 
 int main(int argc, char** argv) {
     Logger::setBufferLevel(Logger::kLineBuffer);
-    g_sp_person->setOnChangeCallBack([&](const Person& oldVal, const Person& newVal) {
-                LOG_INFO << g_sp_person->getName() << " old value: " << oldVal.toString() << " - new value: " 
-                         << newVal.toString() << "\n"; 
-            });
+    // g_sp_person->setOnChangeCallBack([&](const Person& oldVal, const Person& newVal) {
+    //             LOG_INFO << g_sp_person->getName() << " old value: " << oldVal.toString() << " - new value: " 
+    //                      << newVal.toString() << "\n"; 
+    //         });
 
-    Config::traverse([](ConfigVarBase::ptr& ptr) {
-            LOG_INFO << "before: " << ptr->getName() << " = " << ptr->toString() << "\n";
-            });
+//     Config::traverse([](ConfigVarBase::ptr& ptr) {
+//             LOG_INFO << "before: " << ptr->getName() << " = " << ptr->toString() << "\n";
+//             });
+// 
+//     Config::loadFromYaml("config.yaml");
+// 
+//     Config::traverse([](ConfigVarBase::ptr& ptr) {
+//             LOG_INFO << "after: " << ptr->getName() << " = " << ptr->toString() << "\n";
+//             });
 
-    Config::loadFromYaml("config.yaml");
-
-    Config::traverse([](ConfigVarBase::ptr& ptr) {
-            LOG_INFO << "after: " << ptr->getName() << " = " << ptr->toString() << "\n";
-            });
+    testMultiThread();
     return 0;
 }

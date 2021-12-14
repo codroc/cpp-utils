@@ -1,0 +1,6 @@
+multiThread:
+    thread_safe_person:
+        name: "cwp"
+        age: 28
+        sex: true
+        

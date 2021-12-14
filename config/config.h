@@ -21,6 +21,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "flog.h"
+#include "mutex.h"
 
 // 配置变量
 // 一般都有 名字 以及对该变量的 描述
@@ -258,19 +259,29 @@ public:
     {}
 
     std::string toString() override {
+        T tmpVal;
+        {
+            MutexGuard guard(_lock);
+            tmpVal = _val;
+        }
         try {
             // return boost::lexical_cast<std::string>(_val);
-            return ToStr()(_val);
+            return ToStr()(tmpVal);
         }
         catch(std::exception& e) {
             LOG_ERROR << "ConfigVar::toString exception " 
-                << e.what() << " conver: " << typeid(_val).name() 
+                << e.what() << " conver: " << typeid(tmpVal).name() 
                 << " to string" << " name = " << getName() << "\n";
         }
         return "";
     }
 
     bool fromString(const std::string& val) override {
+        T tmpVal;
+        {
+            MutexGuard guard(_lock);
+            tmpVal = _val;
+        }
         try {
             // _val = boost::lexical_cast<T>(val);        
             setValue(FromStr()(val));
@@ -278,28 +289,43 @@ public:
         }
         catch (std::exception& e) {
             LOG_ERROR << "ConfigVar::fromString exception " 
-                << e.what() << " conver: string to " << typeid(_val).name() 
+                << e.what() << " conver: string to " << typeid(tmpVal).name() 
                 << " name = " << getName() << "\n";
         }
         return false;
     }
     
-    T getValue() const { return _val; }
+    T getValue() const { 
+        T tmpVal;
+        {
+            MutexGuard guard(_lock);
+            tmpVal = _val;
+        }
+        return tmpVal; 
+    }
     void setValue(const T& v) {
-        if (v == _val)
-            return;
+        T oldVal;
+        {
+            MutexGuard guard(_lock);
+            if (v == _val)
+                return;
+            oldVal = _val;
+            _val = v;
+        }
         if (_cb)
-            _cb(_val, v);
-        _val = v;
+            _cb(oldVal, v);
     }
 
     std::string getTypeName() const override { return typeid(T).name(); }
 
+    // not thread safe
     void setOnChangeCallBack(OnChangeCallBack cb) { _cb = cb; }
     void delOnChangeCallBack() { _cb = nullptr; }
 private:
     T _val;
     OnChangeCallBack _cb;
+    // cct
+    MutexLock _lock;
 };
 
 class Config {
@@ -348,6 +374,7 @@ public:
 private:
     // map 用于管理所有的 ConfigVarBase::ptr，其实就是所有的 ConfigVar
     // 全局唯一
+    // 规定 约定配置项 在全局进行初始化，初始化完后，不会删除也不会增加，因此不会引入竞争
     static std::map<std::string, ConfigVarBase::ptr> _configVars;
 };
 

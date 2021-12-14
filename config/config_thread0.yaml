@@ -1,0 +1,6 @@
+multiThread:
+    thread_safe_person:
+        name: "codroc"
+        age: 20
+        sex: true
+        
