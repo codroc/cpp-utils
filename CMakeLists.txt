@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 
 project (cpp-utils)
 
-include_directories (cct itc ds log .)
+include_directories (cct itc ds log config .)
 
 aux_source_directory (cct CCT_SRCS)
 aux_source_directory (itc ITC_SRCS)
