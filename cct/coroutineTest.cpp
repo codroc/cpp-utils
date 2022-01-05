@@ -5,7 +5,6 @@ void run_in_coroutine() {
     LOG_INFO << "run in coroutine begin\n";
     Coroutine::GetThis()->swapOut();
     LOG_INFO << "run in coroutine end\n";
-    Coroutine::GetThis()->swapOut();
 }
 
 int main(int argc, char** argv) {

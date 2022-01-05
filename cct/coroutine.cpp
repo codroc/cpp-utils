@@ -25,6 +25,7 @@ Coroutine::Coroutine()
     getcontext(&_ctx);
 
     ++g_coroutine_count;
+    LOG_INFO << "Coroutine::Coroutine id = " << _id << "\n";
 }
 
 Coroutine::Coroutine(std::function<void()> cb, size_t stackSize) 
@@ -42,6 +43,7 @@ Coroutine::Coroutine(std::function<void()> cb, size_t stackSize)
 
     makecontext(&_ctx, &Coroutine::MainFunc, 0);
     ++g_coroutine_count;
+    LOG_INFO << "Coroutine::Coroutine id = " << _id << "\n";
 }
 
 Coroutine::~Coroutine() {
@@ -61,6 +63,7 @@ Coroutine::~Coroutine() {
         if (cur == this)
             SetThis(nullptr);
     }
+    LOG_INFO << "Coroutine::~Coroutine id = " << _id << "\n";
 }
 
 void Coroutine::reset(std::function<void()> cb) {
@@ -132,4 +135,7 @@ void Coroutine::MainFunc() {
         cur->_status = EXCEPT;  
         LOG_ERROR << "Coroutine Except\n";
     }
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->swapOut();
 }
