@@ -195,7 +195,31 @@ int SkipList<K, V>::insert(K key, V val) {
 // 删除 key 对应的节点
 template<class K, class V>
 void SkipList<K, V>::erase(K key) {
+    Node<K, V>* update[_maxLevel + 1];
+    ::memset(update, 0, sizeof(Node<K, V>*) * (_maxLevel + 1));
     MutexGuard guard(_lock);
+    Node<K, V>* current = _head;
+    for (int i = _curLevel; i >= 0; --i) {
+        while (current->next[i] && current->next[i]->GetKey() < key)
+            current = current->next[i];
+        update[i] = current;
+    }
+
+    current = current->next[0];
+    int l = 0;
+    if (current && current->GetKey() == key) {
+        l = current->level; // 该节点最高到 level 层
+        // 找到对应的节点了，进行删除
+        for (int i = 0; i < _curLevel; ++i) {
+            if (update[i]->next[i] != current)  break;
+            update[i]->next[i] = current->next[i];
+        }
+    }
+    while (_curLevel > 0 && _head->next[_curLevel] == NULL)
+        _curLevel--;
+    std::cout << "Successfully deleted key "<< key << "\n";
+    _counts--;
+    delete current;
 }
 
 template<class K, class V>
