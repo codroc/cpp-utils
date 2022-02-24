@@ -127,6 +127,43 @@ int main() {
 }
 ```
 
+`cct/fiber.h:`
+
+**class Fiber**
+
+```C++
+#include "thread.h"
+#include "fiber.h"
+#include "flog.h"
+
+void func() {
+    Fiber::ptr cur = GetThis();
+    LOG_INFO << "in func\n";   
+    cur->swapOut();
+    LOG_INFO << "in func again\n";   
+}
+
+void threadRoutine() {
+    // create a main fiber
+    Fiber::GetThis();
+    // new a fiber with 1M stack and let it do func
+    Fiber::ptr fiber1(new Fiber(func, 1024*1024));
+    // swap in to fiber1
+    fiber1->swapIn();
+    LOG_INFO << "return from func\n";   
+    fiber1->swapIn();
+}
+
+int main() {
+    // turn on Line Buffer Level
+    Logger::SetBufferLevel(Logger::kLineBuffer);
+
+    Thread t(threadRoutine);
+    t.start();
+    t.join();
+    return 0;
+}
+```
 
 
 ---
