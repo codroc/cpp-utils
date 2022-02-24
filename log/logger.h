@@ -30,8 +30,8 @@ public:
     // 缓冲级别
     static const int kFullBuffer; // 全缓冲，及默认 缓冲
     static const int kLineBuffer; // 行缓冲
-    static void setBufferLevel(int level) { bufferLevel = level; }
-    static int  getBufferLevel() { return bufferLevel; }
+    static void SetBufferLevel(int level) { bufferLevel = level; }
+    static int  GetBufferLevel() { return bufferLevel; }
 
     // stream 
     LogStream& stream(const char *filename, int line, LEVEL level, const char *func = 0);

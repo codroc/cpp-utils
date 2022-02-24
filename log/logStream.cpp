@@ -90,7 +90,7 @@ void LogStream::append(const char *p, int len) {
     if (static_cast<int>(avail()) > len) {
         memcpy(_cur, p, len);
         _cur += len;
-        if (Logger::getBufferLevel() == Logger::kLineBuffer) {
+        if (Logger::GetBufferLevel() == Logger::kLineBuffer) {
             // 定位 '\n' 在 buf 中最后一次出现的位置 pos，把 pos 之前的字符全部刷新到后端 buf
             char *tmp = _cur;
             while (tmp-- > _buf) {
@@ -127,7 +127,7 @@ char *LogStream::formatTime() {
     int64 us = microSecs % Timestamp::kMicroSecondsPerSecond;
     if (secs != t_lastSecs) {
         // need to flush log to back-end
-        if (t_lastSecs != 0 && Logger::getBufferLevel() == Logger::kFullBuffer)
+        if (t_lastSecs != 0 && Logger::GetBufferLevel() == Logger::kFullBuffer)
             t_needFlush = 1;
         t_lastSecs = secs;
         FastSecondToDate(static_cast<time_t>(secs), t_tm, 8);

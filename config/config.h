@@ -325,7 +325,7 @@ private:
     T _val;
     OnChangeCallBack _cb;
     // cct
-    MutexLock _lock;
+    mutable MutexLock _lock;
 };
 
 class Config {

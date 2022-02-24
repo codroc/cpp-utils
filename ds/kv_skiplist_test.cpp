@@ -3,7 +3,7 @@
 #include <string>
 
 int main(int argc, char **argv) {
-    Logger::setBufferLevel(Logger::kLineBuffer);
+    Logger::SetBufferLevel(Logger::kLineBuffer);
 
     SkipList<int, std::string> lst;
     lst.insert(1, "codroc");

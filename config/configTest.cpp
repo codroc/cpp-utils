@@ -112,7 +112,7 @@ void testMultiThread() {
 }
 
 int main(int argc, char** argv) {
-    Logger::setBufferLevel(Logger::kLineBuffer);
+    Logger::SetBufferLevel(Logger::kLineBuffer);
     // g_sp_person->setOnChangeCallBack([&](const Person& oldVal, const Person& newVal) {
     //             LOG_INFO << g_sp_person->getName() << " old value: " << oldVal.toString() << " - new value: " 
     //                      << newVal.toString() << "\n"; 
