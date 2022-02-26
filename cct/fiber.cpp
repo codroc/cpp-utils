@@ -18,6 +18,7 @@ Fiber::Fiber()
     _stackSize = g_config_stack_size->getValue();
     _stackAddr = ::malloc(_stackSize);
     
+    ::getcontext(&_ctx);
     _ctx.uc_stack.ss_sp = _stackAddr;
     _ctx.uc_stack.ss_size = _stackSize;
     ::makecontext(&_ctx, &Fiber::MainFunc, 0);
@@ -34,6 +35,7 @@ Fiber::Fiber(const Fiber::Callback& cb, size_t stackSize)
     _stackSize = stackSize == 0 ? g_config_stack_size->getValue() : stackSize;
     _stackAddr = ::malloc(_stackSize);
 
+    ::getcontext(&_ctx);
     _ctx.uc_stack.ss_sp = _stackAddr;
     _ctx.uc_stack.ss_size = _stackSize;
     ::makecontext(&_ctx, &Fiber::MainFunc, 0);
