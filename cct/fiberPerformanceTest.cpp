@@ -37,37 +37,43 @@ void testFiberSwapPerformance() {
 struct PC {
     PC()
         : lock(),
-          c(lock)
+          cc(lock),
+          pc(lock)
     {}
+    bool isDone() {
+        MutexGuard guard(lock);
+        return totalCounts == kTimes;
+    }
+
+    bool isFull() { return i == 1; }
+    bool isEmpty() { return i == 0; }
     void Produce() {
         MutexGuard guard(lock);
-        if(i == 0) {
-            i++;
-            c.wakeup();
-        }
-        else
-            c.wait();
+        while(isFull())
+            pc.wait();
+        ++i;
+        ++totalCounts;
+        cc.wakeup();
     }
     void Consume() {
         MutexGuard guard(lock);
-        if(i == 1) {
-            i--;
-            c.wakeup();
-        }
-        else
-            c.wait();
+        while(isEmpty())
+            cc.wait();
+        --i;
+        pc.wakeup();
     }
     MutexLock lock;
-    Condition c;
+    Condition cc, pc;
     int i = 0;
+    int totalCounts = 0;
 };
 PC test;
 void Producer() {
-    while(++i< kTimes)
+    while(!test.isDone())
         test.Produce();
 }
 void Consumer() {
-    while(i < kTimes)
+    while(!test.isDone())
         test.Consume();
     int ms;
     t2 = Timestamp::now();
