@@ -33,12 +33,21 @@ public:
         : _mutexlock(mutex)
     {
         _mutexlock.lock();
+        locked = true;
     }
     ~MutexGuard() {
+        if(locked) {
+            unlock();
+        }
+    }
+
+    void unlock() {
+        locked = false;
         _mutexlock.unlock();
     }
 private:
     MutexLock &_mutexlock;
+    bool locked = false;
 };
 
 #endif
