@@ -13,17 +13,17 @@ int Logger::bufferLevel = 0; // 默认 缓冲
 
 MutexLock Logger::lock;
 MutexLock Logger::initlock;
-Logger* Logger::instance = 0;
+Logger::ptr Logger::instance = nullptr;
 
 std::vector<std::unique_ptr<LogStream>> Logger::streams;
 std::vector<struct tm*> Logger::tms;
 
 LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
-Logger* Logger::getInstance() {
-    if (instance == 0) {
+Logger::ptr Logger::getInstance() {
+    if (!instance) {
         MutexGuard guard(lock);
-        if (instance == 0)
+        if (!instance)
             // 这里由于 reordering 的存在，double check 仍旧无法保证线程安全
             // 加个 FENCE 才能保证线程安全
             // 1. 分配地址
@@ -31,7 +31,7 @@ Logger* Logger::getInstance() {
             // ============================== FENCE
             // 3. 将地址赋值给 instance
             // FIX ME: use memory order
-            instance = new Logger();
+            instance.reset(new Logger);
     }
     return instance;
 }
@@ -66,6 +66,6 @@ void Logger::release() {
             tms.pop_back();
             free(tm);
         }
-        delete instance;
+        instance.reset();
     }
 }

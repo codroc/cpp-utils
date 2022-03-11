@@ -7,11 +7,12 @@
 #include <time.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 // 全局的 日志后端
-AsyncLogging *g_asyncLog;
+static AsyncLogging *g_asyncLog;
 
 void AsyncLogOutput(const char *msg, int len) {
     g_asyncLog->append(msg, len);
@@ -75,6 +76,10 @@ extern int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone
 
 // extern template std::string formatInteger<int>(int v);
 
+static bool IsFileExist(const std::string& filename) {
+    struct stat s;
+    return ::stat(filename.c_str(), &s) == 0;
+}
 
 // rollFile 是根据 rollSize 来进行文件更新的，
 // 文件命名方式：程序名.日期.主机名.进程id.log
@@ -102,13 +107,23 @@ std::string AsyncLogging::rollFile() {
     char newfile[40];
     memset(newfile, 0, sizeof(newfile));
     memcpy(newfile, ret.c_str(), ret.size());
-    args[0] = "jiaoben";
+    char jiaoben[] = "jiaoben";
+    args[0] = jiaoben;
     args[1] = newfile;
     args[2] = 0;
     pid_t pid;
-    if ((pid = fork()) == 0)
-        execv("jiaoben", args);
-    assert(pid == wait(0)); // 等待子进程结束
+    if (IsFileExist(jiaoben)) {
+        if ((pid = fork()) == 0) {
+            if(-1 == execv("jiaoben", args)) {
+                // LOG_INFO << "error\n";
+                printf("error exec jiaoben\n");
+// 这里一掉要保证 execv 成功，不然 exit 也没用，退不出去的，具体看我的文章:
+// https://codroc.github.io/2022/03/10/%E5%A4%9A%E7%BA%BF%E7%A8%8Bfork%E4%B8%8Eexit%E5%BC%95%E5%8F%91%E7%9A%84%E9%97%AE%E9%A2%98/
+                exit(1);
+            }
+        }
+        assert(pid == wait(&status)); // 等待子进程结束
+    }
     return ret;
 }
 

@@ -10,7 +10,7 @@ class LogStream;
 // 日志器必须是全局唯一的
 class Logger {
 public:
-    using self = Logger;
+    using ptr = std::shared_ptr<Logger>;
     enum class LEVEL {
         NONE,
         TRACE,
@@ -21,7 +21,7 @@ public:
         FATAL,
     };
 
-    static self* getInstance();
+    static ptr getInstance();
     void init();
 
     // 日志级别
@@ -41,9 +41,8 @@ public:
 private:
     // 不允许外部构造
     Logger() = default;
-    ~Logger() = default;
 private:
-    static self* instance;
+    static ptr instance;
     static LEVEL level;
     static int bufferLevel; // 0 默认缓冲，1 按行缓冲
     // APPENDER     _appender;

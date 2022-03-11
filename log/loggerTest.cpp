@@ -95,15 +95,17 @@ void TestMultiThreads() {
         // 让 slave 继续
         a_waited = false;
     } 
+    for (int i = 0;i < kNThreads;++i) {
+        t[i].join();
+    }
 }
 
+AsyncLogInit mylog("loggerTest");
 int main(int argc, char *argv[]) {
     if (argc > 1)
         kNThreads = atoi(argv[1]);
-    AsyncLogInit log(argv[0]);
     TestThroughput();
-    // TestRollFile();
+    TestRollFile();
     TestMultiThreads();
-    log.destroy();
     return 0;
 }

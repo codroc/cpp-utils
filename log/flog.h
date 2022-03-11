@@ -13,7 +13,7 @@ public:
         : _watcher(new AsyncLoggingWatcher(progname)),
           _lw(new LoggerWatcher)
     {}
-    void destroy() {
+    ~AsyncLogInit() {
         _lw = nullptr;
         _watcher->stopAsyncLogging();
     }
