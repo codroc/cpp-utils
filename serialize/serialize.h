@@ -20,31 +20,36 @@ public:
     Serialize(type t, size_t base_size = 4096);
     // 对应于 deserializer
     Serialize(type t, const std::string& bytearray);
+
     ~Serialize();
+
+    // deserializer
+    void reset();
+    void reset(const std::string& bytearray);
 
     // write
     // 序列化从 p 开始的 4 个字节到 
     // 序列化失败返回 -1，成功返回 0
     int writeBit32(void* p);
     int writeBit64(void* p);
-    int writeFixed32(uint32_t value);
-    int writeFixed64(uint64_t value);
-    int writeSFixed32(int32_t value);
-    int writeSFixed64(int64_t value);
+    void writeFixed32(uint32_t value);
+    void writeFixed64(uint64_t value);
+    void writeSFixed32(int32_t value);
+    void writeSFixed64(int64_t value);
 
-    int writeVarInt8(int8_t value);
-    int writeVarUint8(uint8_t value);
-    int writeVarInt16(int16_t value);
-    int writeVarUint16(uint16_t value);
-    int writeVarInt32(int32_t value);
-    int writeVarUint32(uint32_t value);
-    int writeVarInt64(int64_t value);
-    int writeVarUint64(uint64_t value);
+    void writeVarInt8(int8_t value);
+    void writeVarUint8(uint8_t value);
+    void writeVarInt16(int16_t value);
+    void writeVarUint16(uint16_t value);
+    void writeVarInt32(int32_t value);
+    void writeVarUint32(uint32_t value);
+    void writeVarInt64(int64_t value);
+    void writeVarUint64(uint64_t value);
 
-    int writeFloat(float value);
-    int writeDouble(double value);
+    void writeFloat(float value);
+    void writeDouble(double value);
 
-    int writeString(const std::string& str);
+    void writeString(const std::string& str);
 
     // read
     int readBit32(void* p);
@@ -54,14 +59,14 @@ public:
     int32_t readSFixed32();
     int64_t readSFixed64();
 
-    int readVarInt8(int8_t* value);
-    int readVarUint8(uint8_t* value);
-    int readVarInt16(int16_t* value);
-    int readVarUint16(uint16_t* value);
-    int readVarInt32(int32_t* value);
-    int readVarUint32(uint32_t* value);
-    int readVarInt64(int64_t* value);
-    int readVarUint64(uint64_t* value);
+    int8_t readVarInt8();
+    uint8_t readVarUint8();
+    int16_t readVarInt16();
+    uint16_t readVarUint16();
+    int32_t readVarInt32();
+    uint32_t readVarUint32();
+    int64_t readVarInt64();
+    uint64_t readVarUint64();
 
     float readFloat();
     double readDouble();
@@ -69,13 +74,20 @@ public:
     std::string readString();
 
     // 写到 Node 中去
-    void write(void* buf, size_t len);
+    void write(const void* buf, size_t len);
 
     // 从 Node 中读出来
     void read(void* buf, size_t len);
 
     // 把 Node 中的所有信息放到 string 中返回
     std::string toString();
+private:
+    uint16_t encodeZigZag16(int16_t value);
+    uint32_t encodeZigZag32(int32_t value);
+    uint64_t encodeZigZag64(int64_t value);
+    int16_t decodeZigZag16(uint16_t value);
+    int32_t decodeZigZag32(uint32_t value);
+    int64_t decodeZigZag64(uint64_t value);
 private:
     struct Node {
         Node(size_t base_size);

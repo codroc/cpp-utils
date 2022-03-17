@@ -41,7 +41,9 @@ Serialize::Serialize(Serialize::type t, size_t base_size)
     _cur = _head->str; // 能否保证 Node 以及构造完成？
 }
 
-Serialize::Serialize(Serialize::type t, const std::string& bytearray) {
+Serialize::Serialize(Serialize::type t, const std::string& bytearray) 
+    : _type(t)
+{
     assert(t == DESERIALIZER && bytearray.size() > 0);
     _buf = (char*) ::malloc(bytearray.size());
     if (_buf == nullptr) {
@@ -66,8 +68,29 @@ Serialize::~Serialize() {
     }
 }
 
+void Serialize::reset() {
+    assert(_type == DESERIALIZER);
+    if (_buf) {
+        ::free(_buf);
+        _buf = nullptr;
+        _len = 0;
+        _readed = 0;
+    }
+}
+
+void Serialize::reset(const std::string& bytearray) {
+    reset();
+    _buf = (char*) ::malloc(bytearray.size());
+    if (_buf == nullptr) {
+        LOG_ERROR << "OOM\n";
+        exit(1);
+    }
+    _len = bytearray.size();
+    ::memmove(_buf, &bytearray[0], _len);
+}
+
 // 写到 Node 中去
-void Serialize::write(void* buf, size_t len) {
+void Serialize::write(const void* buf, size_t len) {
     assert(_type == SERIALIZER);
     if (_capacity > len) {
         ::memmove(_cur, buf, len);
@@ -76,7 +99,7 @@ void Serialize::write(void* buf, size_t len) {
         _size += len;
     } else {
         size_t remain = len - _capacity;
-        char* p = (char*) buf;
+        const char* p = (const char*) buf;
         ::memmove(_cur, p, _capacity);
         p += _capacity;
         _size += _capacity;
@@ -112,6 +135,30 @@ void Serialize::read(void* buf, size_t len) {
     _readed += len;
 }
 
+uint16_t Serialize::encodeZigZag16(int16_t value) {
+    return value < 0 ? ((uint16_t)(-value) * 2 - 1) : (2 * (uint16_t)value);
+}
+
+uint32_t Serialize::encodeZigZag32(int32_t value) {
+    return value < 0 ? ((uint32_t)(-value) * 2 - 1) : (2 * (uint32_t)value);
+}
+
+uint64_t Serialize::encodeZigZag64(int64_t value) {
+    return value < 0 ? ((uint64_t)(-value) * 2 - 1) : (2 * (uint64_t)value);
+}
+
+int16_t Serialize::decodeZigZag16(uint16_t value) {
+    return (value >> 1) ^ -(value & 1);
+}
+
+int32_t Serialize::decodeZigZag32(uint32_t value) {
+    return (value >> 1) ^ -(value & 1);
+}
+
+int64_t Serialize::decodeZigZag64(uint64_t value) {
+    return (value >> 1) ^ -(value & 1);
+}
+
 // write
 // 序列化从 p 开始的 4 个字节到 
 // 序列化失败返回 -1，成功返回 0
@@ -136,51 +183,82 @@ int Serialize::writeBit64(void* p) {
     return 0;
 }
 
-int Serialize::writeFixed32(uint32_t value) {
+void Serialize::writeFixed32(uint32_t value) {
     writeBit32(&value);
 }
 
-int Serialize::writeFixed64(uint64_t value) {
+void Serialize::writeFixed64(uint64_t value) {
     writeBit64(&value);
 }
 
-int Serialize::writeSFixed32(int32_t value) {
+void Serialize::writeSFixed32(int32_t value) {
+    writeFixed32(encodeZigZag32(value));
 }
 
-int Serialize::writeSFixed64(int64_t value) {
+void Serialize::writeSFixed64(int64_t value) {
+    writeFixed64(encodeZigZag64(value));
 }
 
-int Serialize::writeVarInt8(int8_t value) {
+void Serialize::writeVarInt8(int8_t value) {
+    // 这个不需要压缩，也不需要转大端序，直接字节拷贝就行了
+    write(&value, sizeof value);
 }
 
-int Serialize::writeVarUint8(uint8_t value) {
+void Serialize::writeVarUint8(uint8_t value) {
+    write(&value, sizeof value);
 }
 
-int Serialize::writeVarInt16(int16_t value) {
+#define XX(n) \
+    char tmp[n]; \
+    int i = 0; \
+    while (value > 0x80) { \
+        tmp[i++] = static_cast<uint8_t>(value) | 0x80; \
+        value >>= 7; \
+    } \
+    tmp[i++] = static_cast<uint8_t>(value); \
+    write(tmp, i)
+
+void Serialize::writeVarInt16(int16_t value) {
+    writeVarUint16(encodeZigZag16(value));
 }
 
-int Serialize::writeVarUint16(uint16_t value) {
+void Serialize::writeVarUint16(uint16_t value) {
+    XX(3);
 }
 
-int Serialize::writeVarInt32(int32_t value) {
+void Serialize::writeVarInt32(int32_t value) {
+    writeVarUint32(encodeZigZag32(value));
 }
 
-int Serialize::writeVarUint32(uint32_t value) {
+void Serialize::writeVarUint32(uint32_t value) {
+    XX(5);
 }
 
-int Serialize::writeVarInt64(int64_t value) {
+void Serialize::writeVarInt64(int64_t value) {
+    writeVarUint64(encodeZigZag64(value));
 }
 
-int Serialize::writeVarUint64(uint64_t value) {
+void Serialize::writeVarUint64(uint64_t value) {
+    XX(10);
+}
+#undef XX
+
+void Serialize::writeFloat(float value) {
+    writeBit32(&value);
 }
 
-int Serialize::writeFloat(float value) {
+void Serialize::writeDouble(double value) {
+    writeBit64(&value);
 }
 
-int Serialize::writeDouble(double value) {
-}
-
-int Serialize::writeString(const std::string& str) {
+void Serialize::writeString(const std::string& str) {
+    // LV: Length Value
+    // 其中 Length 也是 varint 编码
+    std::string tmp{str};
+    uint32_t len = tmp.size(); // 默认最长的 string 是 4G
+    writeVarUint32(len);
+    if (len == 0)   return;
+    write(&tmp[0], len);
 }
 
 // read
@@ -213,43 +291,84 @@ uint64_t Serialize::readFixed64() {
 }
 
 int32_t Serialize::readSFixed32() {
+    return decodeZigZag32(readFixed32());
 }
 
 int64_t Serialize::readSFixed64() {
+    return decodeZigZag64(readFixed64());
 }
 
 
-int Serialize::readVarInt8(int8_t* value) {
+int8_t Serialize::readVarInt8() {
+    int8_t v;
+    read(&v, sizeof v);
+    return v;
 }
 
-int Serialize::readVarUint8(uint8_t* value) {
+uint8_t Serialize::readVarUint8() {
+    uint8_t v;
+    read(&v, sizeof v);
+    return v;
 }
 
-int Serialize::readVarInt16(int16_t* value) {
+#define XX(n) \
+    uint##n##_t ret = 0; \
+    for (int i = 0; i < n; i+=7) { \
+        uint8_t b; \
+        read(&b, 1); \
+        if (b < 0x80) { \
+            ret |= static_cast<uint##n##_t>(b) << i; \
+            break; \
+        } \
+        ret |= static_cast<uint##n##_t>(b & 0x7f) << i; \
+    } \
+    return ret
+
+int16_t Serialize::readVarInt16() {
+    return decodeZigZag16(readVarUint16());
 }
 
-int Serialize::readVarUint16(uint16_t* value) {
+uint16_t Serialize::readVarUint16() {
+    XX(16);
 }
 
-int Serialize::readVarInt32(int32_t* value) {
+int32_t Serialize::readVarInt32() {
+    return decodeZigZag32(readVarUint32());
 }
 
-int Serialize::readVarUint32(uint32_t* value) {
+uint32_t Serialize::readVarUint32() {
+    XX(32);
 }
 
-int Serialize::readVarInt64(int64_t* value) {
+int64_t Serialize::readVarInt64() {
+    return decodeZigZag64(readVarUint64());
 }
 
-int Serialize::readVarUint64(uint64_t* value) {
+uint64_t Serialize::readVarUint64() {
+    XX(64);
 }
+
+#undef XX
 
 float Serialize::readFloat() {
+    float f;
+    readBit32(&f);
+    return f;
 }
 
 double Serialize::readDouble() {
+    double d;
+    readBit64(&d);
+    return d;
 }
 
-std::string readString() {
+std::string Serialize::readString() {
+    uint32_t len = readVarUint32();
+    if (len == 0)   return {};
+    std::string ret;
+    ret.resize(len);
+    read(&ret[0], len);
+    return ret;
 }
 
 std::string Serialize::toString() {
