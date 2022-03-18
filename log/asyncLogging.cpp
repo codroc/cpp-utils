@@ -104,7 +104,7 @@ std::string AsyncLogging::rollFile() {
     
     // 执行脚本，对原来的 日志包 解包，对每个日志文件重命名（0=>1，1=>2 ...），然后将 1~N 的日志文件重新压缩打包，父进程等待子进程退出，这阶段父进程不能持有任何锁
     char *args[3];
-    char newfile[40];
+    char newfile[100];
     memset(newfile, 0, sizeof(newfile));
     memcpy(newfile, ret.c_str(), ret.size());
     char jiaoben[] = "jiaoben";
