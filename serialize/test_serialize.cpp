@@ -1,4 +1,6 @@
 #include "serialize.h"
+#include "example.hpp"
+#include <assert.h>
 void TestFixed32And64() {
     Serialize se(Serialize::SERIALIZER);
 
@@ -117,12 +119,19 @@ void TestString() {
     printf("after serialize and deserialize:\nstr: %s\n", de.readString().c_str());
 }
 
+void TestExample() {
+    Person p{"codroc", "male", 24, 10000000};
+    Person pp{Person::deserializeToPerson(p.serializeToString())};
+    assert(p == pp);
+    std::cout << p << pp;
+}
 int main(int argc, char** argv) {
-    TestFixed32And64();
-    TestSFixed32And64();
-    TestVar8();
-    TestVar16to64();
-    TestFloatAndDouble();
-    TestString();
+    // TestFixed32And64();
+    // TestSFixed32And64();
+    // TestVar8();
+    // TestVar16to64();
+    // TestFloatAndDouble();
+    // TestString();
+    TestExample();
     return 0;
 }

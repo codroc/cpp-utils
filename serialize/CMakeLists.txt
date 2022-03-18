@@ -9,5 +9,5 @@ add_library(libserialize SHARED serialize.cpp)
 target_link_libraries(libserialize PUBLIC cpputils)
 target_include_directories(libserialize PUBLIC .)
 
-add_executable(test_serialize test_serialize.cpp)
+add_executable(test_serialize test_serialize.cpp example.hpp)
 target_link_libraries(test_serialize PUBLIC libserialize)
