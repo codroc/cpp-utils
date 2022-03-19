@@ -5,6 +5,7 @@
 
 bool is_hooked();
 void set_hook_enable();
+void set_hook_disable();
 
 
 extern "C" {

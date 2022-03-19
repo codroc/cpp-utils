@@ -10,6 +10,7 @@ static thread_local bool t_hooked = false;
 
 bool is_hooked() { return t_hooked; }
 void set_hook_enable() { t_hooked = true; }
+void set_hook_disable() { t_hooked = false; }
 
 
 extern "C" {
@@ -37,7 +38,7 @@ int usleep(useconds_t usec) {
 
 struct Init {
     Init() {
-        set_hook_enable();
+        // set_hook_enable();
 #define XX(name) name ## _f = (name ## _func) ::dlsym(RTLD_NEXT, #name);
         HOOK_FUNC(XX)
 #undef XX
