@@ -15,6 +15,9 @@ struct Person {
 
     std::string serializeToString();
     static Person deserializeToPerson(const std::string& str);
+
+    bool serializeToFile(const std::string& filepath);
+    Person deserializeFromFile(const std::string& filepath);
 };
 
 std::string Person::serializeToString() {
@@ -34,6 +37,15 @@ Person Person::deserializeToPerson(const std::string& str) {
         de.readVarUint8(),
         de.readVarUint32()
     };
+}
+
+bool Person::serializeToFile(const std::string& filepath) {
+    if (!Serialize::toFile(filepath, serializeToString())) return false;
+    return true;
+}
+
+Person Person::deserializeFromFile(const std::string& filepath) {
+    return deserializeToPerson(Serialize::fromFile(filepath));
 }
 
 std::ostream& operator<<(std::ostream& os, const Person& p) {

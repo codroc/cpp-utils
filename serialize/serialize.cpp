@@ -1,6 +1,7 @@
 #include "serialize.h"
 #include <assert.h>
 #include <byteswap.h>
+#include <fstream>
 
 #include "flog.h"
 
@@ -381,5 +382,28 @@ std::string Serialize::toString() {
         tmp = tmp->next;
     }
     ret.append(tmp->str, s);
+    return ret;
+}
+
+bool Serialize::toFile(const std::string& filepath, const std::string& str) {
+    std::ofstream of(filepath);
+    if (of.fail()) {
+        LOG_ERROR << "can not open file: " << filepath << "\n";
+        return false;
+    }
+    of << str;
+    of.close();
+    return true;
+}
+
+std::string Serialize::fromFile(const std::string& filepath) {
+    std::ifstream infile(filepath);
+    if (infile.fail()) {
+        LOG_ERROR << "can not open file: " << filepath << "\n";
+        return {};
+    }
+    std::string ret;
+    infile >> ret;
+    infile.close();
     return ret;
 }

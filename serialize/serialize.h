@@ -81,6 +81,13 @@ public:
 
     // 把 Node 中的所有信息放到 string 中返回
     std::string toString();
+
+    // serialize to file
+    // 前提是 Serialize 对象里已经保存了 序列化过的字符串了
+    static bool toFile(const std::string& filepath, const std::string& str);
+    // 从文件获取序列化的字符串
+    // 前提假设是 file 中存在合规范的序列化字符串
+    static std::string fromFile(const std::string& filepath);
 private:
     uint16_t encodeZigZag16(int16_t value);
     uint32_t encodeZigZag32(int32_t value);

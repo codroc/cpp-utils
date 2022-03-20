@@ -125,6 +125,16 @@ void TestExample() {
     assert(p == pp);
     std::cout << p << pp;
 }
+void TestFile() {
+    Person p{"codroc", "male", 24, 10000000};
+    printf("original Person:\n");
+    std::cout << p << std::endl;
+
+    p.serializeToFile("person.se");
+    printf("New person! after serializeToFile and deserializeFromFile:\n");
+    std::cout << p.deserializeFromFile("person.se");
+}
+
 int main(int argc, char** argv) {
     // TestFixed32And64();
     // TestSFixed32And64();
@@ -132,6 +142,7 @@ int main(int argc, char** argv) {
     // TestVar16to64();
     // TestFloatAndDouble();
     // TestString();
-    TestExample();
+    // TestExample();
+    TestFile();
     return 0;
 }
