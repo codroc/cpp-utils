@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-std::map<std::string, ConfigVarBase::ptr> Config::_configVars;
+// std::map<std::string, ConfigVarBase::ptr> Config::_configVars;
 
 // map 中 key 的格式 是： "A.B = 10", "A.C = 20"
 // 而 yaml 文件中的格式 是：
@@ -11,6 +11,7 @@ std::map<std::string, ConfigVarBase::ptr> Config::_configVars;
 //   C: 20
 
 ConfigVarBase::ptr Config::find(const std::string& name) {
+    auto _configVars = getConfigVars();
     auto it =  _configVars.find(name);
     if (it == _configVars.end())
         return nullptr;
@@ -71,6 +72,7 @@ void Config::loadFromYaml(const char* filename) {
 }
 
 void Config::traverse(std::function<void(ConfigVarBase::ptr&)> func) {
+    auto _configVars = getConfigVars();
     for (auto it = _configVars.begin(); it != _configVars.end(); ++it)
         func(it->second);
 }

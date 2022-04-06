@@ -332,9 +332,14 @@ class Config {
 public:
     using ptr = std::shared_ptr<Config>;
     
+    static std::map<std::string, ConfigVarBase::ptr> getConfigVars() {
+        static std::map<std::string, ConfigVarBase::ptr> _configVars;
+        return _configVars;
+    }
     // 查找相关 配置变量，找不到 返回 nullptr
     template<class T>
     static typename ConfigVar<T>::ptr lookup(const std::string& name) {
+        auto _configVars = getConfigVars();
         auto it = _configVars.find(name);
         if (it == _configVars.end())
             return nullptr;
@@ -349,6 +354,7 @@ public:
             // 没找到：有 2 中可能
             // 1. map 中没有以 name 为 key 的 entry
             // 2. map 中有，但是 type 不一致，导致 std::dynamic_pointer_cast<ConfigVar<T>>(it->second) 返回 nullptr
+            auto _configVars = getConfigVars();
             auto it = _configVars.find(name);
             if (it != _configVars.end()) {
                 // 情况 2
@@ -375,7 +381,7 @@ private:
     // map 用于管理所有的 ConfigVarBase::ptr，其实就是所有的 ConfigVar
     // 全局唯一
     // 规定 约定配置项 在全局进行初始化，初始化完后，不会删除也不会增加，因此不会引入竞争
-    static std::map<std::string, ConfigVarBase::ptr> _configVars;
+    // static std::map<std::string, ConfigVarBase::ptr> _configVars;
 };
 
 #endif
