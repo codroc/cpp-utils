@@ -372,6 +372,7 @@ public:
     }
 
     // 从 yaml 配置文件中读取 配置变量
+    static void loadFromYaml(const std::string& filename);
     static void loadFromYaml(const char* filename);
     static ConfigVarBase::ptr find(const std::string& name);
 

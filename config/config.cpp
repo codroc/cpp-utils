@@ -53,6 +53,10 @@ void listAllNodes(const std::string& name, const YAML::Node& node, std::vector<s
     }
 }
 
+void Config::loadFromYaml(const std::string& filename) {
+    loadFromYaml(filename.c_str());
+}
+
 void Config::loadFromYaml(const char* filename) {
     YAML::Node node = YAML::LoadFile(filename);
     std::vector<std::pair<std::string, YAML::Node>> allNodes;
