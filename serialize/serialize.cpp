@@ -212,7 +212,7 @@ void Serialize::writeVarUint8(uint8_t value) {
 #define XX(n) \
     char tmp[n]; \
     int i = 0; \
-    while (value > 0x80) { \
+    while (value >= 0x80) { \
         tmp[i++] = static_cast<uint8_t>(value) | 0x80; \
         value >>= 7; \
     } \

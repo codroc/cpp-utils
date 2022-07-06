@@ -42,23 +42,25 @@ void TestSFixed32And64() {
 void TestVar8() {
     Serialize se(Serialize::SERIALIZER);
     int8_t  a = -127;
+    uint8_t c = 128;
     uint8_t b = 224;
-    printf("Before serialize:\na: %d\tb: %d\n", a, b);
+    printf("Before serialize:\na: %d\tc: %d\tb: %d\n", a, c, b);
     se.writeVarInt8(a);
+    se.writeVarUint8(c);
     se.writeVarUint8(b);
     std::string res = se.toString();
 
     Serialize de(Serialize::DESERIALIZER, res);
     
-    printf("After serialize and deserialize:\na: %d\tb: %d\n", 
-            de.readVarInt8(), de.readVarUint8());
+    printf("After serialize and deserialize:\na: %d\tc: %d\tb: %d\n", 
+            de.readVarInt8(), de.readVarUint8(), de.readVarUint8());
 }
 
 void TestVar16to64() {
     Serialize se(Serialize::SERIALIZER);
     uint16_t a = 10;
     int16_t  b = -1;
-    uint32_t c = 165536;
+    uint32_t c = 128;
     int32_t  d = -16;
     uint64_t e = 0x00000000ffffffff;
     int64_t  f = 0x000000ffffffffff;
@@ -139,7 +141,7 @@ int main(int argc, char** argv) {
     // TestFixed32And64();
     // TestSFixed32And64();
     // TestVar8();
-    // TestVar16to64();
+    TestVar16to64();
     // TestFloatAndDouble();
     // TestString();
     // TestExample();
