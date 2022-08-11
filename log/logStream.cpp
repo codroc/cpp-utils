@@ -29,7 +29,6 @@ void defaultFlushFunc() {
     fflush(stdout);
 }
 
-// 由于 g_output 是全局变量，因此会在编译后便被初始化
 LogStream::outputFunc g_output = defaultOutputFunc;
 LogStream::flushFunc  g_flush  = defaultFlushFunc;
 

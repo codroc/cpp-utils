@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <Python.h>
+#include <python3.7m/Python.h>
 int main(int argc, char *argv[]) {
     char *filename = argv[1];
     // printf("going to exec jiaoben.py filename = %s\n", filename);

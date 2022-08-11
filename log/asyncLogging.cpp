@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 // 全局的 日志后端
 static AsyncLogging *g_asyncLog;
@@ -37,8 +38,6 @@ AsyncLogging::AsyncLogging(const char *basename, int rollSize, int flushInterval
       _buffers(),
       _lock(),
       _cond(_lock),
-//       _startLock(),
-//       _started(_startLock),
       _thread(std::bind(&AsyncLogging::mainRoutine, this), "AsyncLogger")
 {
     _currentBuffer->bzero();
@@ -72,15 +71,6 @@ void AsyncLogging::append(const char *logline, int len) {
 
 extern int FastSecondToDate(const time_t& unix_sec, struct tm* tm, int time_zone);
 
-// class LogStream;
-
-// extern template std::string formatInteger<int>(int v);
-
-static bool IsFileExist(const std::string& filename) {
-    struct stat s;
-    return ::stat(filename.c_str(), &s) == 0;
-}
-
 // rollFile 是根据 rollSize 来进行文件更新的，
 // 文件命名方式：程序名.日期.主机名.进程id.log
 std::string AsyncLogging::rollFile() {
@@ -100,7 +90,6 @@ std::string AsyncLogging::rollFile() {
     ret.append(formatInteger(static_cast<int>(getpid())).c_str());
 
     ret.append(".log0");
-    // printf("start roll file! %s\n", ret.c_str());
     
     // 执行脚本，对原来的 日志包 解包，对每个日志文件重命名（0=>1，1=>2 ...），然后将 1~N 的日志文件重新压缩打包，父进程等待子进程退出，这阶段父进程不能持有任何锁
     char *args[3];
@@ -112,18 +101,12 @@ std::string AsyncLogging::rollFile() {
     args[1] = newfile;
     args[2] = 0;
     pid_t pid;
-    if (IsFileExist(jiaoben)) {
-        if ((pid = fork()) == 0) {
-            if(-1 == execv("jiaoben", args)) {
-                // LOG_INFO << "error\n";
-                printf("error exec jiaoben\n");
-// 这里一掉要保证 execv 成功，不然 exit 也没用，退不出去的，具体看我的文章:
-// https://codroc.github.io/2022/03/10/%E5%A4%9A%E7%BA%BF%E7%A8%8Bfork%E4%B8%8Eexit%E5%BC%95%E5%8F%91%E7%9A%84%E9%97%AE%E9%A2%98/
-                exit(1);
-            }
+    if ((pid = fork()) == 0) {
+        if(-1 == execv("jiaoben", args)) {
+            ::abort();
         }
-        assert(pid == wait(&status)); // 等待子进程结束
     }
+    ::wait(NULL);
     return ret;
 }
 

@@ -21,7 +21,8 @@ public:
         FATAL,
     };
 
-    static ptr getInstance();
+    static Logger::ptr getInstance();
+    ~Logger() { release(); }
     void init();
 
     // 日志级别
@@ -42,7 +43,7 @@ private:
     // 不允许外部构造
     Logger() = default;
 private:
-    static ptr instance;
+    static Logger::ptr instance;
     static LEVEL level;
     static int bufferLevel; // 0 默认缓冲，1 按行缓冲
     // APPENDER     _appender;

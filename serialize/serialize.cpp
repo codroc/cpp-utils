@@ -300,6 +300,7 @@ int64_t Serialize::readSFixed64() {
 }
 
 
+// TODO: 存在 bug，当 int8 最高位为 1 时，还是需要用 两个字节来保存
 int8_t Serialize::readVarInt8() {
     int8_t v;
     read(&v, sizeof v);

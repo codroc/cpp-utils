@@ -24,8 +24,8 @@ void TestThroughput() {
         Timestamp start = Timestamp::now();
         for (int i = 0;i < 10;++i) {
             // s 的长度为 100 字节
-            for (int i = 0;i < kNumLogs;++i) { // 前端最多缓存 1000 * 100 字节
-                LOG_WARN << out.c_str() << i << "\n";
+            for (int k = 0;k < kNumLogs;++k) { // 前端最多缓存 1000 * 100 字节
+                LOG_WARN << out.c_str() << k << "\n";
             }
         }
         Timestamp end = Timestamp::now();

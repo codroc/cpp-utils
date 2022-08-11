@@ -6,6 +6,8 @@
 #include "asyncLogging.h"
 #include "timestamp.h"
 #include "thread.h"
+#include <unistd.h>
+#include <sys/syscall.h>
 
 class AsyncLogInit {
 public:
@@ -14,8 +16,9 @@ public:
           _lw(new LoggerWatcher)
     {}
     ~AsyncLogInit() {
+        // printf("~AsyncLogInit()\tThreadId: %ld\n", ::syscall(SYS_gettid));
         _lw = nullptr;
-        _watcher->stopAsyncLogging();
+        _watcher = nullptr;
     }
 private:
     std::unique_ptr<AsyncLoggingWatcher> _watcher;

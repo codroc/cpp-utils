@@ -63,6 +63,7 @@ public:
             MutexGuard guard(_lock);
             size = _currentBuffer->size();
         }
+        printf("AsyncLogInit::stop()\tsize: %ld\n", size);
         while (size > 0) {
             _cond.wakeup();
             MutexGuard guard(_lock);
@@ -97,15 +98,13 @@ private:
     MutexLock     _lock; // 用于 前端与后端 数据传输时避免 race condition
     Condition     _cond; // 用于 至少 3s 内后端被叫醒 去 落盘
 
-    // MutexLock     _startLock;
-    // Condition     _started; // 等待启动完毕，也就是说等待 后端线程 启动 mainRoutine 并将 _running 置为 true
     Thread        _thread;
 };
 
 class AsyncLoggingWatcher {
 public:
     AsyncLoggingWatcher(const char* progname);
-    void stopAsyncLogging() { _upAsyncLogging->stop(); }
+    ~AsyncLoggingWatcher() { _upAsyncLogging->stop(); }
 private:
     std::unique_ptr<AsyncLogging> _upAsyncLogging;
 };
