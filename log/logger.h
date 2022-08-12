@@ -25,8 +25,8 @@ public:
     void init();
 
     // 日志级别
-    static void  setLevel(LEVEL l) { level = l; }
-    static LEVEL getLevel() { return level; }
+    void  setLevel(LEVEL l) { level = l; }
+    LEVEL getLevel() { return level; }
     // 缓冲级别
     static const int kFullBuffer; // 全缓冲，及默认 缓冲
     static const int kLineBuffer; // 行缓冲
@@ -43,7 +43,7 @@ private:
     Logger() = default;
 private:
     static Logger* instance;
-    static LEVEL level;
+    LEVEL level{LEVEL::TRACE};
     static int bufferLevel; // 0 默认缓冲，1 按行缓冲
     // APPENDER     _appender;
     // 线程安全
@@ -59,15 +59,15 @@ private:
     static std::vector<struct tm*> tms;
 };
 
-#define LOG_TRACE if (Logger::getLevel() <= Logger::LEVEL::TRACE) \
+#define LOG_TRACE if (Logger::getInstance()->getLevel() <= Logger::LEVEL::TRACE) \
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::TRACE, __func__)
-#define LOG_INFO if (Logger::getLevel() <= Logger::LEVEL::INFO) \
+#define LOG_INFO if (Logger::getInstance()->getLevel() <= Logger::LEVEL::INFO) \
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::INFO)
-#define LOG_DEBUG if (Logger::getLevel() <= Logger::LEVEL::DEBUG) \
+#define LOG_DEBUG if (Logger::getInstance()->getLevel() <= Logger::LEVEL::DEBUG) \
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::DEBUG, __func__)
-#define LOG_WARN if (Logger::getLevel() <= Logger::LEVEL::WARN) \
+#define LOG_WARN if (Logger::getInstance()->getLevel() <= Logger::LEVEL::WARN) \
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::WARN)
-#define LOG_ERROR if (Logger::getLevel() <= Logger::LEVEL::ERROR) \
+#define LOG_ERROR if (Logger::getInstance()->getLevel() <= Logger::LEVEL::ERROR) \
     Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::ERROR)
 // fatal 必定退出进程
 #define LOG_FATAL Logger::getInstance()->stream(__FILE__, __LINE__, Logger::LEVEL::FATAL)

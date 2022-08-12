@@ -5,7 +5,7 @@ __thread LogStream* t_pLogStream = 0;
 __thread struct tm *t_tm = 0;
 
 // static variable initialization
-Logger::LEVEL Logger::level = Logger::LEVEL::NONE;
+// Logger::LEVEL Logger::level = Logger::LEVEL::NONE;
 
 const int Logger::kFullBuffer = 0; // 全缓冲，及默认 缓冲
 const int Logger::kLineBuffer = 1; // 行缓冲

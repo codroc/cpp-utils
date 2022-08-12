@@ -42,7 +42,7 @@ void TestRollFile() {
     out += s;
     for (int i = 0;i < 2000000;++i) // 200M
         LOG_WARN << out.c_str() << i << "\n";
-    Logger::setLevel(Logger::LEVEL::INFO);
+    Logger::getInstance()->setLevel(Logger::LEVEL::INFO);
     for (int i = 0;i < 10;++i)
         LOG_INFO << out.c_str() << i << "\n";
 }
