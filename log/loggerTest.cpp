@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1)
         kNThreads = atoi(argv[1]);
     TestThroughput();
-    TestRollFile();
-    TestMultiThreads();
+    // TestRollFile();
+    // TestMultiThreads();
     return 0;
 }

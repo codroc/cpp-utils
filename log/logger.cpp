@@ -13,14 +13,15 @@ int Logger::bufferLevel = 0; // 默认 缓冲
 
 MutexLock Logger::lock;
 MutexLock Logger::initlock;
-Logger::ptr Logger::instance = nullptr;
 
 std::vector<std::unique_ptr<LogStream>> Logger::streams;
 std::vector<struct tm*> Logger::tms;
 
-LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
+Logger* Logger::instance = nullptr;
+Logger::ptr instance_deleter(Logger::getInstance(), [](Logger*) { Logger::release(); });
+// LoggerWatcher lw; // 用于推出程序时回收 Logger 中的资源，同时达到刷新 缓冲区 的作用
 
-Logger::ptr Logger::getInstance() {
+Logger* Logger::getInstance() {
     if (!instance) {
         MutexGuard guard(lock);
         if (!instance)
@@ -31,7 +32,7 @@ Logger::ptr Logger::getInstance() {
             // ============================== FENCE
             // 3. 将地址赋值给 instance
             // FIX ME: use memory order
-            instance.reset(new Logger);
+            instance = new Logger;
     }
     return instance;
 }
@@ -66,6 +67,6 @@ void Logger::release() {
             tms.pop_back();
             free(tm);
         }
-        instance.reset();
+        instance = nullptr;
     }
 }
